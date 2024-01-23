@@ -1,0 +1,94 @@
+extends "lhc:///Trains.pkl"
+
+// The base configuration which the other trains inherit from.
+base = new Train { 
+    templatesDirectory = "Integration/Templates"
+    checklistDirectory = "Integration/Checklists"
+    attrsRef = "refs/notes/proton/attrs"
+    checklistsRef = "refs/notes/proton/checklists"
+
+    // Linter settings are common for both trains.
+    linter = new {
+        projectIdPrefix = "VPNAPPL-"
+        requireCommitTypes = new Listing {
+            "feat"
+            "fix"
+            "build"
+            "test"
+            "refactor"
+            "build"
+            "ci"
+            "doc"
+            "chore"
+            "i18n"
+            "release"
+        }
+    }
+}
+
+mac = (base) {
+    name = "mac"
+    displayName = "macOS"
+    tagPrefix = "mac/"
+
+    trailers = new Trailers {
+        projectId = "Jira-Id"
+        releasePipeline = "Release-Pipeline-macOS"
+    }
+
+    build = new BuildSettings {
+        scheme = "ProtonVPN-macOS"
+        teamId = "J6S6Q257EK"
+        platform = "macOS"
+        teamName = "ProtonVPN AG"
+        xcodeproj = "apps/macos/macOS.xcodeproj"
+        productName = "ProtonVPN"
+        appIdentifier = "ch.protonvpn.mac"
+        testplansDirectory = "apps/macos/TestPlans"
+
+        match = new MatchSettings {
+            branchName = "macos/vpn-ci"
+            keychainName = null
+        }
+    }
+
+    distribution = new Sparkle {
+        minimumSystemVersion = "12.0"
+        phasedRolloutInterval = 86400
+    }
+}
+
+ios = (base) {
+    name = "ios"
+    displayName = "iOS"
+    tagPrefix = "ios/"
+
+    trailers = new Trailers {
+        projectId = "Jira-Id"
+        releasePipeline = "Release-Pipeline-iOS"
+    }
+
+    build = new BuildSettings {
+        scheme = "ProtonVPN-iOS"
+        teamId = "2SB5Z68H26"
+        platform = "iOS"
+        teamName = "Proton AG"
+        xcodeproj = "apps/ios/iOS.xcodeproj"
+        productName = "ProtonVPN"
+        appIdentifier = "ch.protonmail.vpn"
+        testplansDirectory = "apps/ios/TestPlans"
+
+        match = new MatchSettings {
+            branchName = "ios/vpn-ci"
+            keychainName = null
+        }
+    }
+
+    distribution = new AppStore {
+        testflightGroup =
+            if (base.releaseChannel == "alpha") "Internal Members" else
+            if (base.releaseChannel == "beta") "Public Beta" else null
+    }
+}
+
+trains = new { ios mac }

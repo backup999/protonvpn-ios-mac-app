@@ -1,0 +1,18 @@
+{% if train == "iOS" %}
+output_name "ProtonVPN-ios"
+scheme "ProtonVPN-iOS"
+{% elif train == "macOS" %}
+output_name "ProtonVPN-mac"
+scheme "ProtonVPN-macOS"
+{% endif %}
+
+use_system_scm true
+
+xcodebuild_args = "-skipPackagePluginValidation"
+if (dynamic_domain = ENV["DYNAMIC_DOMAIN"])
+    xcodebuild_args << " DYNAMIC_DOMAIN=#{dynamic_domain}"
+end
+
+xcargs xcodebuild_args
+
+# Available options: workspace, project, scheme, clean, output_directory, output_name, configuration, silent, codesigning_identity, skip_package_ipa, skip_package_pkg, include_symbols, include_bitcode, export_method, export_options, export_xcargs, skip_build_archive, skip_archive, skip_codesigning, catalyst_platform, installer_cert_name, build_path, archive_path, derived_data_path, result_bundle, result_bundle_path, buildlog_path, sdk, toolchain, destination, export_team_id, xcargs, xcconfig, suppress_xcode_output, xcodebuild_formatter, build_timing_summary, disable_xcpretty, xcpretty_test_format, xcpretty_formatter, xcpretty_report_junit, xcpretty_report_html, xcpretty_report_json, xcpretty_utf, analyze_build_time, skip_profile_detection, xcodebuild_command, cloned_source_packages_path, skip_package_dependencies_resolution, disable_package_automatic_updates, use_system_scm

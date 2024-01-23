@@ -1,0 +1,7 @@
+{% extends "docc.info.base.plist" %}
+
+{% block bundle_name %}ProtonVPNRelease{% endblock %}
+{% block display_name %}Proton VPN Release {{ release.versionString }}{% endblock %}
+{% block bundle_id %}ch.proton.vpn.apple.release_description{% endblock %}
+{% block short_version %}{{ release.versionString }}{% endblock %}
+{% block version %}{{ release.versionString }}{% endblock %}

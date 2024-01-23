@@ -1,0 +1,168 @@
+# Helperfile: A library file for the extra functions used in Fastfile.template
+# This is plain old ruby, no template shenanigans here.
+#
+# vi: ft=ruby
+
+require 'json'
+
+# Fastlane puts us in $repo_path/fastlane, so we need a path to the repository itself.
+$repo_path = File.expand_path("#{Dir.pwd}/..")
+$mintfile = "#{$repo_path}/Mintfile"
+
+def set_plist_keys_helper(configuration, xcodeproj, project_dir, target_map, action, plist_entries)
+    targets = []
+
+    # First, get all of the targets for a given scheme, as well as each target's dependencies.
+    # Getting dependencies is necessary because things like system extensions don't automatically get included into
+    # schemes as buildable references for some reason.
+    action.entries.each do |entry|
+        entry.buildable_references.each do |reference|
+            next unless (target = target_map[reference.target_name])
+            targets.append(target)
+
+            for dependency in target.dependencies
+                next unless (target = dependency.target)
+                targets.append(target)
+            end
+        end
+    end
+
+    plist_target_key = "INFOPLIST_FILE"
+    targets.each do |target|
+        next unless (build_settings = target.build_settings(configuration))
+
+        plist_path = build_settings.fetch(
+            plist_target_key,
+            target.common_resolved_build_setting(
+                plist_target_key
+            )
+        )
+        next unless plist_path
+
+        update_info_plist(
+            xcodeproj: xcodeproj,
+            plist_path: plist_path,
+            block: proc do |plist|
+                plist_entries.each do |key, value|
+                    plist[key] = value
+                end
+            end
+        )
+    end
+end
+
+# This one is kind of a monster: manually crack open the Xcode project, find the named scheme on disk, and iterate
+# through all of the targets and their dependencies for that scheme, adding the given keys to all of the info plists.
+private_lane :set_plist_keys do |options|
+    build_target_entries = options.fetch(:extra_plist_entries, {})
+    test_target_entries = options.fetch(:extra_test_plist_entries, {})
+    next if build_target_entries.empty? and test_target_entries.empty?
+
+    project_dir = get_or_die(options, :project_dir)
+    xcodeproj = get_or_die(options, :xcodeproj)
+    xcodeproj = File.expand_path("#{$repo_path}/#{xcodeproj}")
+
+    scheme_name = get_or_die(options, :scheme)
+    configuration = get_or_die(options, :configuration)
+
+    project = Xcodeproj::Project.open(xcodeproj)
+    schemes = Xcodeproj::Project.schemes(xcodeproj)
+    shared_schemes = Xcodeproj::XCScheme.shared_data_dir(xcodeproj)
+    scheme_path = "#{shared_schemes}/#{scheme_name}.xcscheme"
+    unless (schemes.include?(scheme_name)) and File.exist?(scheme_path)
+        die "Unable to find scheme named #{scheme_name} in #{xcodeproj}."
+    end
+
+    scheme = Xcodeproj::XCScheme.new(scheme_path)
+
+    target_map = {}
+    project.targets.each do |target|
+        target_map[target.name] = target
+    end
+
+    unless build_target_entries.empty?
+        die "Scheme's build action is not defined." unless scheme.build_action
+        set_plist_keys_helper(configuration, xcodeproj, project_dir, target_map, scheme.build_action, build_target_entries)
+    end
+
+    unless test_target_entries.empty?
+        die "Scheme's test action is not defined." unless scheme.test_action
+        set_plist_keys_helper(configuration, xcodeproj, project_dir, target_map, scheme.test_action, test_target_entries)
+    end
+end
+
+# Create a dmg using the `dmgconfig' python tool. Requires that the tool is installed.
+private_lane :create_dmg do |arguments|
+    dmg_config = rel_to_repo(get_or_die($options, :dmg_config))
+    output_directory = rel_to_repo(get_or_die($options, :output_directory))
+
+    output_name = get_or_die($options, :output_name)
+    volume_name = $options.fetch(:dmg_volume_name, output_name)
+    app_name = "#{output_name}.app"
+    dmg_name = $options.fetch(:dmg_output_name, output_name) + ".dmg"
+
+    puts "Creating disk image containing #{output_name}.app named #{dmg_name} using #{dmg_config}, mountable as #{volume_name}..."
+
+    Dir.chdir(output_directory) {
+        puts `env python3 -m dmgbuild -Dapp="#{app_name}" -Drepo="#{$repo_path}" -s "#{dmg_config}" "#{volume_name}" "#{dmg_name}"`
+    }
+
+    die "Could not create dmg." unless $?.success?
+end
+
+def tests_in_testplan(path)
+    unless File.exist?(path) and (contents = File.read(path)) and (json = JSON.parse(contents))
+        puts "#{path} is not a valid testplan path, ignoring file."
+        return nil
+    end
+
+    unless (testTargets = json["testTargets"])
+        puts "Test plan has unrecognized format, ignoring file."
+        return nil
+    end
+
+    result = []
+    testTargets.each do |test|
+        next unless (target = test["target"])
+        next unless (name = target["name"])
+        result << name
+    end
+    return result
+end
+
+def interpret_code_coverage()
+    # Prepare coverage report
+    puts "Generating code coverage json..."
+    xcresult_path = get_or_die(lane_context, SharedValues::SCAN_GENERATED_XCRESULT_PATH)
+    test_output_directory = $options.fetch(:output_directory, "output")
+    coverage_report_file = "#{$repo_path}/#{test_output_directory}/coverage.json"
+
+    result = `xcrun xccov view --report --json #{xcresult_path} > #{coverage_report_file}`
+    unless $?.success?
+        die "Unable to generate code coverage report from xcresult: #{result}"
+    end
+
+    exclude = ""
+    if (exclude_targets = $options[:coverage_exclude_targets])
+        exclude_targets.each do |target|
+            exclude << " --exclude-targets #{target}"
+        end
+    end
+
+    puts "Converting json to cobertura format..."
+    # Convert test coverage report to cobertura format for gitlab to understand
+    result = `mint run -m "#{$mintfile}" xcodecoverageconverter generate #{coverage_report_file} "#{test_output_directory}/cobertura.xml" cobertura-xml#{exclude}`
+    unless $?.success?
+        die "Unable to convert code coverage file to cobertura format: #{result}"
+    end
+
+    coverage_contents = File.read(coverage_report_file)
+    coverage_data = JSON.parse(coverage_contents)
+    unless line_coverage = coverage_data["lineCoverage"]
+        die "Line coverage data not present in code coverage file."
+    end
+
+    puts "Total test coverage: #{(line_coverage * 100).round(2)}%"
+end
+
+

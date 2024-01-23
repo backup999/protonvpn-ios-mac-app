@@ -1,0 +1,4 @@
+{% extends "sparkle-item.base.xml" -%}
+{% block version -%}
+{% include "timestamp" -%}
+{% endblock -%}

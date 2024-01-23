@@ -1,51 +1,43 @@
 stages:
+  - prepare
   - i18n
   - github
-  - lint
-  - deploy
-  - build
-  - distribute
-  - test
-  - test_ui
-  - cleanup
+  - trigger
+
+##
+## ---- Variables
+##
 
 variables:
-  GIT_SUBMODULE_STRATEGY: normal
-  GIT_SUBMODULE_FORCE_HTTPS: "true"
+  ATLAS_DEPLOY_ENV: "true"
   LC_ALL: "en_US.UTF-8"
   LANG: "en_US.UTF-8"
-  CI_KEYCHAIN_NAME: $CI_JOB_ID
   # We use this variable when we run publish-github jobs
   RELEASE_GITHUB_REPOSITORY: git@github.com:ProtonVPN/ios-mac-app.git
   # Folder where jobs put their output like build binaries, test results, etc.
-  JOBS_OUTPUT_PATH: "artifacts/"
+  JOBS_OUTPUT_PATH: "output"
   # Default tart settings
   TART_EXECUTOR_ALWAYS_PULL: "false"
   TART_EXECUTOR_HEADLESS: "false"
-  # Nexus
-  NEXUS_GROUP: "/Vpn/IOS/Sli/Latest/Stable/"
-  NEXUS_REPO: "test-productivity-builds-distribution"
-
+  DESCRIBE_DIR: "apple-vpn-ci"
+  PIPELINE_TEMPLATE: "gitlab-pipeline.yml"
+  # We don't need to clone submodules deeply, we just need to get at their source.
+  GIT_SUBMODULE_STRATEGY: normal
+  GIT_SUBMODULE_DEPTH: 1
+  GIT_SUBMODULE_FORCE_HTTPS: "true"
 
 default:
-  image: "team-vpn-macos14.4.1-xcode15.0.1"
+  image: "team-vpn"
 
+# Only start a pipeline if it's for a merge request, if the pipeline has been scheduled, if this is a merge result onto
+# the develop branch, or if this is a tag which begins with a recognized tag prefix like `mac` or `ios`.
 workflow:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || 
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" ||
           $CI_PIPELINE_SOURCE == "schedule" ||
-          $CI_COMMIT_BRANCH == "develop"
-      variables:
-        # also deploy on MRs and schedules
-        ATLAS_DEPLOY_ENV: "true"
-    # run tests without env deployment
-    - if: $CI_COMMIT_TAG
-
+          $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH ||
+          $CI_COMMIT_TAG =~ /mac|ios\/\d+/
 include:
-  - project: 'proton/devops/atlas-deploy'
-    ref: main
-    file: '/scenarios/pipeline-env.yml'
-
   - project: 'translations/generator'
     ref: master
     file: '/jobs/sync-crowdin.gitlab-ci.yml'
@@ -57,6 +49,183 @@ include:
   - project: 'agarroux/publish-github'
     ref: feat/github-app
     file: '/jobs/release.gitlab-ci.yml'
-  
-  # Include all jobs from all the files on `.gitlab/jobs/` folder
-  - local: '.gitlab/jobs/*.yml'
+
+  # Generate a dynamic pipeline for each build train (platform) we support. This pipeline is based off of the template
+  # at Integration/Templates/gitlab-pipeline.yml, and builds, tests, and publishes all necessary artifacts.
+  #
+  # Jobs that do not require running multiple times for each build train should remain in .gitlab-ci.yml.
+  # - component: gitlab.protontech.ch/proton/devops/cicd-components/community/git-lhc/describe (not in the catalog yet)
+  - project: 'proton/devops/cicd-components/community/git-lhc'
+    file: templates/describe.yml
+    ref: 0.7.0-alpha.5
+    inputs:
+      output_directory: apple-vpn-ci
+      cmd_prefix: "mint run "
+      templates: "pages.docc fastlane $PIPELINE_TEMPLATE slack-message.txt sparkle-item.xml"
+      trains: "ios mac"
+      predescribe: "add_arg '--define' \"CI_NEXUS_URL=$CI_NEXUS_URL\""
+
+##
+## ---- Job templates shamefully stolen from Integration/Templates/gitlab-pipeline.yml
+##
+
+.job_template:
+  before_script: |
+    # Delete all ssh private keys
+    ssh-add -D
+    # Add private key for access to gitlab
+    echo "$CI_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    # Setup git identity
+    git config --local user.email $GIT_CI_EMAIL
+    git config --local user.name $GIT_CI_USERNAME
+    # Save gitlab servers public key
+    [ -n "$(ssh-keygen -F $CI_SERVER_HOST)" ] || ssh-keyscan -H $CI_SERVER_HOST >> ~/.ssh/known_hosts
+    # Change origin to use ssh as the backend
+    git remote rm origin && git remote add origin "git@${CI_SERVER_HOST}:${CI_PROJECT_PATH}.git"
+
+.mint_cache:
+  variables:
+    MINT_PATH: .caches/mint
+    MINT_LINK_PATH: $MINT_PATH/bin
+    MINT_CACHE_POLICY: pull-push
+  cache:
+    - key: mint-$CI_COMMIT_REF_SLUG
+      fallback_keys:
+        - mint-$CI_DEFAULT_BRANCH
+      paths:
+        - $MINT_PATH
+      policy: $MINT_CACHE_POLICY
+
+##
+## ---- Translations
+##
+
+# Jobs come from the generator inside gitlab translations/generator
+# Config for the project itself (i18n config) is inside translations/config-app
+i18n-crowdin-upload:
+  stage: i18n
+  variables:
+      I18N_SYNC_CROWDIN_PROJECT: 'apple-vpn'
+      I18N_EXTRACT_FROM_DIRECTORIES: 'libraries/Strings'
+  extends: .i18n-sync-crowdin-shared-apple
+
+i18n-crowdin-download:
+  stage: i18n
+  variables:
+      I18N_COMMIT_CROWDIN_PROJECT: 'apple-vpn'
+      I18N_EXTRACT_FROM_DIRECTORIES: 'libraries/Strings'
+  extends: .i18n-commit-locales-shared-apple
+
+##
+## ---- Linting/pipeline generation
+##
+
+# Lint the project, then generate the pipeline.
+prepare:
+  extends:
+    - .job_template
+    - .mint_cache
+  variables:
+    GIT_DEPTH: 200
+    GIT_SUBMODULE_STRATEGY: none
+  stage: prepare
+  tags: 
+    - vpn-apple-xs-new
+    - ci-vilnius-1
+  before_script:
+    - !reference [.job_template, before_script]
+    - !reference [.lhc_describe, before_script]
+  script:
+    - |
+      # Lint commits, code quality, and translations on branches only (not tags)
+      if [ -z "$CI_COMMIT_TAG" ]; then
+          mint run git-lhc lint --verbose # Lint commit history
+          Integration/Scripts/code_quality.sh # Lint code quality
+          Integration/Scripts/lint_translations.sh # Lint string files
+      fi
+    - !reference [.lhc_describe, script] # Generate child pipelines
+  artifacts:
+    expire_in: 5 days
+    paths:
+      - apple-vpn-ci/*/*
+      - codequality_report.json
+    reports:
+      codequality: codequality_report.json
+
+##
+## ---- Uploading (production) tags to GitHub
+##
+
+        # github:mirror:commits:
+        #   extends: .release-sync-commit-shared
+        #   stage: github
+        #   interruptible: true
+        #   variables:
+        #     RELEASE_SYNC_TO_BRANCH: 'develop'
+        #     RELEASE_SYNC_FROM_BRANCH: 'develop'
+        #   # Run the job only if we have a tag ex:
+        #   #   - mac/1.1.1111111
+        #   #   - ios/1.1.1
+        #   only: &onlyTagsFilterOpenSource
+        #     refs:
+        #       - tags
+        #     variables:
+        #       - $CI_COMMIT_TAG =~ /^(mac|ios)\/\d+\.\d+\.\d+$/
+        # 
+        # github:mirror:tag:
+        #   extends: .release-sync-tags-shared
+        #   stage: github
+        #   interruptible: true
+        #   variables:
+        #     RELEASE_SYNC_FROM_BRANCH: 'develop'
+        #   only:
+        #     <<: *onlyTagsFilterOpenSource
+
+##
+## ---- Trigger dynamic pipelines
+##
+
+# If a tag was pushed, then only one pipeline was created. Otherwise, LHC generated one pipeline for each build train,
+# and we need to trigger each one in a matrix.
+
+# Trigger the pipeline generated by the describe job, for one or all trains as necessary.
+.trigger_template:
+  stage: trigger
+  variables:
+    # For tagging commits with the pipeline id
+    PARENT_PIPELINE_ID: $CI_PIPELINE_ID
+    # For fetching job artifacts (avoids a bug [!366870] in Gitlab dependencies)
+    PARENT_JOB_ID: $CI_JOB_ID
+  trigger:
+    strategy: depend
+    forward:
+      pipeline_variables: true
+      yaml_variables: true
+      
+trigger:tag:
+  extends:
+    - .trigger_template
+  trigger:
+    include:
+      - artifact: "$DESCRIBE_DIR/release/$PIPELINE_TEMPLATE"
+        job: prepare
+  rules:
+    - if: $CI_COMMIT_TAG
+      
+trigger:branch:
+  extends:
+    - .trigger_template
+  parallel:
+    matrix:
+      - TRAIN: [ios, mac]
+  trigger:
+    include:
+      - artifact: "$DESCRIBE_DIR/$TRAIN/$PIPELINE_TEMPLATE"
+        job: prepare
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || 
+          $CI_PIPELINE_SOURCE == "schedule" ||
+          $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
