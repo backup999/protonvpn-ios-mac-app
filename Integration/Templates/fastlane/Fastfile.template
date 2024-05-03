@@ -104,6 +104,17 @@
 ## ---- Build Setup (*not* test builds)
 ##
 
+{% block prebuild %}
+{{ block.super }}
+    # !begin: ProtonVPN prebuild
+
+    # Delete assets that are needed only in other apps that use core libs
+    puts "Deleting unused Accounts assets"
+    temp = `cd .. && Integration/Scripts/delete-unused-assets.sh && cd -`.strip
+    die "Deleting unused Accounts assets failed" unless $?.success?
+    # !end: ProtonVPN prebuild
+{% endblock %}
+
 {% block postbuild %}
 {{ block.super }}
     {% if config.distribution.sparkle %}
