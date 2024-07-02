@@ -91,4 +91,38 @@ ios = (base) {
     }
 }
 
-trains = new { ios mac }
+// NB: tvOS inherits properties from iOS, _not_ the base train
+tv = (ios) {
+    name = "tv"
+    displayName = "tvOS"
+    tagPrefix = "tv/"
+
+    trailers = new Trailers {
+        projectId = "Jira-Id"
+        releasePipeline = "Release-Pipeline-tvOS"
+    }
+
+    build = new BuildSettings {
+        scheme = "ProtonVPN-tvOS"
+        teamId = "2SB5Z68H26"
+        platform = "tvOS"
+        teamName = "Proton AG"
+        xcodeproj = "apps/tvos/tvOS.xcodeproj"
+        productName = "ProtonVPN"
+        appIdentifier = "ch.protonmail.vpn"
+        testplansDirectory = "apps/tvos/TestPlans"
+
+        match = new MatchSettings {
+            branchName = "tvos/vpn-ci"
+            keychainName = null
+        }
+    }
+
+    distribution = new AppStore {
+        testflightGroup =
+            if (base.releaseChannel == "alpha") "Internal Members" else
+            if (base.releaseChannel == "beta") "Public Beta" else null
+    }
+}
+
+trains = new { ios mac tv }

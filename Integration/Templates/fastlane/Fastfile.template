@@ -56,8 +56,9 @@ import("./Helperfile")
     end
     {% endif %}
     if $options[:configuration] == "Staging" || $options[:configuration] == "Release"
-        {% if config.build.platform == "iOS" %}
+        {% if config.build.platform == "iOS" or config.build.platform == "tvOS" %}
         $options[:export_method] = "app-store"
+        $options[:code_sign_identity] = "Apple Distribution"
         {% elif config.build.platform == "macOS" %}
         $options[:export_method] = "developer-id"
         $options[:notarize] = true
@@ -89,6 +90,9 @@ import("./Helperfile")
     "ch.protonvpn.ProtonVPNStarter" => "ProtonVPNStarter",
     "#{$app_identifier}.OpenVPN-Extension" => "ProtonVPN OpenVPN",
     "#{$app_identifier}.WireGuard-Extension" => "ProtonVPN WireGuard",
+    {% elif config.build.platform == "tvOS" %}
+    $app_identifier => "ProtonVPN-tvOS",
+    "#{$app_identifier}.WireGuard-tvOS" => "WireGuard-tvOS",
     {% endif %}
     # !end: ProtonVPN targets
 {% endblock %}
@@ -101,6 +105,9 @@ import("./Helperfile")
     {% elif config.build.platform == "macOS" %}
     "ch.protonvpn.ProtonVPNTests" => "ProtonVPNmacOSTests",
     "ch.protonmail.vpn.ProtonVPNUITests" => "ProtonVPNmacOSUITests",
+    {% elif config["platform"] == "tvos" %}
+    "#{$app_identifier}.tvOS.test.unit" => "ProtonVPNtvOSTests",
+    "#{$app_identifier}.tvOS.test.ui" => "ProtonVPNtvOSUITests",
     {% endif %}
     # !end: ProtonVPN test_targets
 {% endblock %}
@@ -174,7 +181,7 @@ import("./Helperfile")
         )
     end
 
-    {% if train == "iOS" %}
+    {% if train == "iOS" or train == "tvOS" %}
     $options[:create_simulator] = true
 
     {% if config.build.ci %}
@@ -183,13 +190,18 @@ import("./Helperfile")
     $options[:destination_name] = "{{ config.build.productName }}-{{ config.build.platform|lowercase }}"
     {% endif %}
 
-    $options[:simulator_device_type] = "iPhone-12"
-
+    {% if train == "iOS" %}
     # We don't pass this to run_tests, it's just for finding the .xctestrun file.
     # (Weird things happen if you decide to pass this value to run_tests. I don't recommend it.)
-    $options[:sdk] = "iphonesimulator16.4"
+    $options[:sdk] = "iphonesimulator17"
+    $options[:simulator_device_type] = "iPhone-12"
+    {% else %}
+    $options[:sdk] = "appletvsimulator17"
+    $options[:simulator_device_type] = "Apple-TV-4K-3rd-generation-1080p"
+    {% endif %}
+
     {% elif train == "macOS" %}
-    $options[:sdk] = "macosx14.2"
+    $options[:sdk] = "macosx14"
     $options[:destination_arch] = `uname -m`.strip
     {% endif %}
     # !end: ProtonVPN pretest
@@ -221,7 +233,7 @@ import("./Helperfile")
 # uploaded until we get the callback for the release announcement.
 {% block preship +%}
     # !begin: ProtonVPN preship
-    {% if train == "iOS" %}
+    {% if train == "iOS" or train == "tvOS" %}
     $options[:ipa] = File.expand_path("#{$repo_path}/#{$options[:output_directory]}/#{$options[:output_name]}.ipa")
     {% endif %}
     # !end: ProtonVPN preship

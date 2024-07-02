@@ -36,7 +36,7 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" ||
           $CI_PIPELINE_SOURCE == "schedule" ||
           $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH ||
-          $CI_COMMIT_TAG =~ /mac|ios\/\d+/
+          $CI_COMMIT_TAG =~ /mac|ios|tv\/\d+/
 include:
   - project: 'translations/generator'
     ref: master
@@ -57,12 +57,12 @@ include:
   # - component: gitlab.protontech.ch/proton/devops/cicd-components/community/git-lhc/describe (not in the catalog yet)
   - project: 'proton/devops/cicd-components/community/git-lhc'
     file: templates/describe.yml
-    ref: 0.7.0-alpha.5
+    ref: 0.7.0-alpha.9
     inputs:
       output_directory: apple-vpn-ci
       cmd_prefix: "mint run "
       templates: "pages.docc fastlane $PIPELINE_TEMPLATE slack-message.txt sparkle-item.xml"
-      trains: "ios mac"
+      trains: "ios mac tv"
       predescribe: "add_arg '--define' \"CI_NEXUS_URL=$CI_NEXUS_URL\""
 
 ##
@@ -170,7 +170,7 @@ prepare:
         #     refs:
         #       - tags
         #     variables:
-        #       - $CI_COMMIT_TAG =~ /^(mac|ios)\/\d+\.\d+\.\d+$/
+        #       - $CI_COMMIT_TAG =~ /^(mac|ios|tv)\/\d+\.\d+\.\d+$/
         # 
         # github:mirror:tag:
         #   extends: .release-sync-tags-shared
@@ -217,7 +217,7 @@ trigger:branch:
     - .trigger_template
   parallel:
     matrix:
-      - TRAIN: [ios, mac]
+      - TRAIN: [ios, mac, tv]
   trigger:
     include:
       - artifact: "$DESCRIBE_DIR/$TRAIN/$PIPELINE_TEMPLATE"

@@ -52,8 +52,8 @@ include:
     ref: main
     file: '/scenarios/pipeline-env.yml'
 
-{% if release.tagName and config.platform == "macOS" %}
-{% if channel == "alpha" or channel == "releaseCandidate" %} # Alpha and RC are for release candidates
+{% if release.tagName and config.build.platform == "macOS" %}
+{% if config.releaseChannel == "alpha" or config.releaseChannel == "releaseCandidate" %} # Alpha and RC are for release candidates
   - component: gitlab.protontech.ch/proton/devops/cicd-components/tools/artifactlift/release-candidate@0.1.13
     inputs:
       stage: publish
@@ -121,7 +121,7 @@ artifactlift-release-artifacts:
     AL_ROOT_DIRECTORY: .
   environment:
     # Certain environments, like beta and production, require approval for distribution.
-    name: {{ channel }}
+    name: {{ config.releaseChannel }}
     url: "$CI_PAGES_URL/$CI_COMMIT_REF_SLUG/documentation/protonvpnrelease/"
   artifacts:
     paths:
@@ -295,7 +295,7 @@ artifactlift-release-metadata:
 ## ---- Building artifacts
 ##
 
-{% if not release.tagName or channel == "alpha" %}
+{% if not release.tagName or config.releaseChannel == "alpha" %}
 {% if release.tagName %}
 build:{{ config.name }}:
 {% else %}
@@ -309,6 +309,7 @@ build:{{ config.name }}:tests:
     - vpn-apple-builds-new
     - ci-vilnius-1
   script: 
+    - *source_profile_script
     - *copy_fastlane_script
     - FASTLANE_ARGS=("configuration:${CONFIGURATION}")
     - *fastlane_build_vars_script
@@ -319,7 +320,7 @@ build:{{ config.name }}:tests:
         tests) fastlane testit build_for_testing:true "${FASTLANE_ARGS[@]}" ;;
         *) exit 1 ;;
       esac
-{% if release.tagName and channel == "alpha" %}
+{% if release.tagName and config.releaseChannel == "alpha" %}
   # New tag, build release and staging app, along with tests
   parallel:
     matrix:
@@ -428,7 +429,7 @@ test:{{ config.name }}:ui:smoke:
 ##
 
 # On macOS this is handled by artifactlift.
-{% if train == "iOS" %}
+{% if train != "macOS" %}
 publish:{{ config.name }}:app:
   variables:
     CONFIGURATION: Release
@@ -449,7 +450,7 @@ publish:{{ config.name }}:app:
       done
   needs:
     - *child_pipeline_needs
-{% if channel == "alpha" %}
+{% if config.releaseChannel == "alpha" %}
     # For alpha builds, we need access to the jobs that created the binaries.
     - job: 'build:{{ config.name }}'
       parallel:
@@ -462,7 +463,7 @@ publish:{{ config.name }}:app:
           - TARGET: app
             CONFIGURATION: Staging
   environment:
-    name: {{ channel }}
+    name: {{ config.releaseChannel }}
     url: "$CI_PAGES_URL/$CI_COMMIT_REF_SLUG/documentation/protonvpnrelease/"
 {% endif %}
 {% endif %}
@@ -490,7 +491,7 @@ cleanup:announce:tag:
     - *child_pipeline_needs
     - job: pages
     {% if train == "macOS" %}
-    {% if channel == "alpha" or channel == "releaseCandidate" %} # Alpha and RC are for release candidates
+    {% if config.releaseChannel == "alpha" or config.releaseChannel == "releaseCandidate" %} # Alpha and RC are for release candidates
     - job: artifactlift-release-candidate-artifacts
     # artifactlift job (to make sure the binary has been uploaded)
     {% else %}
@@ -552,7 +553,7 @@ pages:
   needs:
     # For the pages template (and sparkle template if needed)
     - *child_pipeline_needs
-    {% if train == "macOS" and channel != "alpha" %}
+    {% if train == "macOS" and config.releaseChannel != "alpha" %}
     # For sparkle.signature
     - job: 'artifactlift-release-artifacts'
     {% endif %}
