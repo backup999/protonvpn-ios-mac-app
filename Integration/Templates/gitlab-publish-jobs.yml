@@ -1,0 +1,81 @@
+{% extends "gitlab-publish-job.base.yml" %}{# Default publish template #}
+
+{% block publish_header %}
+  extends:
+    - .job_template
+    - .mint_cache_template
+  {% if config.distribution.appStore %}
+  environment:
+    # Certain environments, like beta and production, require approval for distribution.
+    name: {{ config.releaseChannel }}
+    url: "$CI_PAGES_URL/$CI_COMMIT_REF_SLUG/documentation/protonvpnrelease/"
+  {% endif %}
+{% endblock %}
+
+{% block publish_tags %}
+  - vpn-apple-metal-new
+  - $PIPELINE_HOST
+{% endblock %}
+
+{% block pages_header %}
+  extends:
+    - .job_template
+{% endblock %}
+
+{% block publish_footer %}
+{% if config.distribution.sparkle %}
+{%
+    if config.build.ci.eventType == "merge_request_event" and
+    config.build.ci.refName == config.userProperties.releaseBranch
+%}
+{# Modify the Nexus release upload jobs #}
+{% for configuration in block.configurations|split:"," %}
+{%- if configuration == "Staging" -%}{# Add prefix to the job #}
+  staging-
+{%- endif -%}
+artifactlift-release-candidate-artifacts:
+  variables:
+    GIT_STRATEGY: none
+  rules: # overwrite rules, normally this only runs on release branches like release/X.Y.Z.
+  needs: # Make sure we get the artifacts from the build job.
+    - job: "build:{{ config.name }}:all"
+      parallel:
+        matrix:
+          - TARGET: app
+            CONFIGURATION: {{ configuration }}
+{% endfor %}
+{% elif config.build.ci.tagName and target|attrs:config.trailers.releasePipeline %}
+{# Modify the Nexus release promotion jobs #}
+artifactlift-release-artifacts:
+  needs: # Require the parent artifacts for the sparkle template
+    - pipeline: $PARENT_PIPELINE_ID
+      job: 'prepare'
+  variables:
+    # We don't need to clone the repo, since this job operates on artifacts only.
+    GIT_STRATEGY: none
+    # Use the timestamp so we can re-use binaries for build promotion later on if necessary.
+    AL_NEXUS_DOWNLOAD_DIRECTORY: macos/{{ short_version }}+{% include "timestamp.base" %}
+    # Upload the binary based on the version.
+    AL_S3_UPLOAD_DIRECTORY: "macos/{{ version }}"
+    # Where to save the files locally (after cd'ing into $artifact_local_directory)
+    AL_ROOT_DIRECTORY: .
+  environment:
+    # Certain environments, like beta and production, require approval for distribution.
+    name: {{ config.releaseChannel }}
+    url: "$CI_PAGES_URL/$CI_COMMIT_REF_SLUG/documentation/protonvpnrelease/"
+  artifacts:
+    paths:
+      # Pass this on to the pages step, which in turn passes it on to the -metadata job. This should instead be the normal fastlane publish job.
+      - artifacts/sparkle.signature
+
+artifactlift-release-metadata:
+  variables:
+    GIT_STRATEGY: none
+    # Where to save the files locally (after cd'ing into $artifact_local_directory)
+    AL_ROOT_DIRECTORY: .
+  needs:
+    # For the sparkle update file
+    - job: pages
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "gitlab-test-job.base.yml" %} {# Default test template #}
+
+{% block test_job_name %}.test_job_template{% endblock %}
+
+{% block test_tags %}
+    - vpn-{{ config.build.platform|lowercase }}-tests-new
+    - $PIPELINE_HOST
+{% endblock %}
+
+{% block test_vars %}
+{{ block.super }}
+    DERIVED_DATA_CACHE_POLICY: pull
+    MINT_CACHE_POLICY: pull
+{% endblock %}
+
+{% block test_header %}
+  extends:
+    - .job_template
+    - .build_cache_template
+{% endblock %}
+
+{#
+ # For merge results, always build everything.
+ # Merge requests can build the app optionally by manual action.
+ # Lastly, everything with tags is manually built.
+ #}
+{% block test_rules %}
+{% if config.build.ci.eventType == "merge_request_event" %}
+{% if config.build.ci.refName == config.userProperties.releaseBranch %}
+    - when: on_success
+{% else %}
+    - if: $TARGET == "app"
+      when: manual
+    - when: on_success
+{% endif %}
+{% else %}
+{% endif %}
+{% endblock %}
+
+{% block test_footer %}
+
+.ui_test_template:
+  extends:
+    - .test_job_template
+  stage: test_ui
+  needs:
+    - job: 'deploy:review' # Make sure env gets deployed before starting UI tests
+
+# Unit tests run automatically on every job, provided the upstream pipelines (e.g. builds) are run.
+test:{{ config.name }}:unit:
+  extends:
+    - .test_job_template
+  stage: test
+  variables:
+    TEST_PLAN: {{ config.build.productName }}-{{ config.build.platform }}-Unit-All
+
+# Smoke UI tests run for all merge request events, including merged results.
+test:{{ config.name }}:ui:smoke:
+  stage: test_ui
+  variables:
+    TEST_PLAN: {{ config.build.productName }}-{{ config.build.platform }}-UI-Smoke
+  extends:
+    - .ui_test_template
+  rules:
+{% if config.build.ci.eventType == "merge_request_event" %}
+    - when: on_success
+{% else %}
+    - when: manual
+      allow_failure: true
+{% endif %}
+
+# UI tests run automatically on scheduled pipelines only.
+test:{{ config.name }}:ui:all:
+  stage: test_ui
+  variables:
+    TEST_PLAN: {{ config.build.productName }}-{{ config.build.platform }}-UI-All
+  extends:
+    - .ui_test_template
+  {% if config.build.ci.eventType != "schedule" %}
+  when: manual
+  {% endif %}
+
+{% endblock %}

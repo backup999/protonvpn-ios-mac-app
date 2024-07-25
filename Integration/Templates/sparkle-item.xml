@@ -2,3 +2,6 @@
 {% block version -%}
 {% include "timestamp" -%}
 {% endblock -%}
+{% block download_url -%}
+https://proton.me/download/macos/{{ version }}/ProtonVPN_mac_v{{ short_version }}.dmg
+{% endblock -%}

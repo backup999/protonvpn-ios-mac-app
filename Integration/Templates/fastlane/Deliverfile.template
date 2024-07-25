@@ -32,4 +32,7 @@ CHANGELOG
 })
 {% endif %}
 
+app_version "{{ short_version }}"
+build_number "{% include "timestamp" %}"
+
 # Available options: api_key_path, api_key, username, app_identifier, app_version, ipa, pkg, build_number, platform, edit_live, use_live_version, metadata_path, screenshots_path, skip_binary_upload, skip_screenshots, skip_metadata, skip_app_version_update, force, overwrite_screenshots, sync_screenshots, submit_for_review, verify_only, reject_if_possible, automatic_release, auto_release_date, phased_release, reset_ratings, price_tier, app_rating_config_path, submission_information, team_id, team_name, dev_portal_team_id, dev_portal_team_name, itc_provider, run_precheck_before_submit, precheck_default_rule_level, individual_metadata_items, app_icon, apple_watch_app_icon, copyright, primary_category, secondary_category, primary_first_sub_category, primary_second_sub_category, secondary_first_sub_category, secondary_second_sub_category, trade_representative_contact_information, app_review_information, app_review_attachment_file, description, name, subtitle, keywords, promotional_text, release_notes, privacy_url, apple_tv_privacy_policy, support_url, marketing_url, languages, ignore_language_directory_validation, precheck_include_in_app_purchases, app

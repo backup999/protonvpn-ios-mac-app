@@ -1,11 +1,24 @@
 extends "lhc:///Trains.pkl"
 
 // The base configuration which the other trains inherit from.
-base = new Train { 
+local base = new Train {
     templatesDirectory = "Integration/Templates"
     checklistDirectory = "Integration/Checklists"
     attrsRef = "refs/notes/proton/attrs"
     checklistsRef = "refs/notes/proton/checklists"
+
+    trailers = new Trailers {
+        projectId = "Jira-Id"
+    }
+
+    build = new BuildSettings {
+        productName = "ProtonVPN"
+        userProperties = new Mapping {
+            ["platformVersion"] = "14.4.1"
+            ["toolchainVersion"] = "15.4"
+            ["appConfigurations"] = "Release,Staging"
+        }
+    }
 
     // Linter settings are common for both trains.
     linter = new {
@@ -24,31 +37,34 @@ base = new Train {
             "release"
         }
     }
+
+    userProperties = new Mapping {
+        ["releaseBranch"] = "develop"
+    }
 }
 
-mac = (base) {
+local mac = (base) {
     name = "mac"
     displayName = "macOS"
     tagPrefix = "mac/"
 
-    trailers = new Trailers {
-        projectId = "Jira-Id"
+    trailers = (base.trailers) {
         releasePipeline = "Release-Pipeline-macOS"
     }
 
-    build = new BuildSettings {
+    build = (base.build) {
         scheme = "ProtonVPN-macOS"
         teamId = "J6S6Q257EK"
         platform = "macOS"
         teamName = "ProtonVPN AG"
         xcodeproj = "apps/macos/macOS.xcodeproj"
-        productName = "ProtonVPN"
         appIdentifier = "ch.protonvpn.mac"
+        outputDirectory = "output/mac"
         testplansDirectory = "apps/macos/TestPlans"
+        dmgConfigPath = "Integration/Scripts/dmg_config.py"
 
         match = new MatchSettings {
             branchName = "macos/vpn-ci"
-            keychainName = null
         }
     }
 
@@ -58,29 +74,27 @@ mac = (base) {
     }
 }
 
-ios = (base) {
+local ios = (base) {
     name = "ios"
     displayName = "iOS"
     tagPrefix = "ios/"
 
-    trailers = new Trailers {
-        projectId = "Jira-Id"
+    trailers = (base.trailers) {
         releasePipeline = "Release-Pipeline-iOS"
     }
 
-    build = new BuildSettings {
+    build = (base.build) {
         scheme = "ProtonVPN-iOS"
         teamId = "2SB5Z68H26"
         platform = "iOS"
         teamName = "Proton AG"
         xcodeproj = "apps/ios/iOS.xcodeproj"
-        productName = "ProtonVPN"
         appIdentifier = "ch.protonmail.vpn"
+        outputDirectory = "output/ios"
         testplansDirectory = "apps/ios/TestPlans"
 
         match = new MatchSettings {
             branchName = "ios/vpn-ci"
-            keychainName = null
         }
     }
 
@@ -92,36 +106,31 @@ ios = (base) {
 }
 
 // NB: tvOS inherits properties from iOS, _not_ the base train
-tv = (ios) {
+local tv = (ios) {
     name = "tv"
     displayName = "tvOS"
     tagPrefix = "tv/"
 
-    trailers = new Trailers {
-        projectId = "Jira-Id"
+    trailers = (base.trailers) {
         releasePipeline = "Release-Pipeline-tvOS"
     }
 
-    build = new BuildSettings {
+    build = (base.build) {
         scheme = "ProtonVPN-tvOS"
         teamId = "2SB5Z68H26"
         platform = "tvOS"
-        teamName = "Proton AG"
         xcodeproj = "apps/tvos/tvOS.xcodeproj"
-        productName = "ProtonVPN"
         appIdentifier = "ch.protonmail.vpn"
+        outputDirectory = "output/tv"
         testplansDirectory = "apps/tvos/TestPlans"
 
         match = new MatchSettings {
             branchName = "tvos/vpn-ci"
-            keychainName = null
         }
-    }
 
-    distribution = new AppStore {
-        testflightGroup =
-            if (base.releaseChannel == "alpha") "Internal Members" else
-            if (base.releaseChannel == "beta") "Public Beta" else null
+        userProperties = (base.build.userProperties) {
+            ["appConfigurations"] = "Release"
+        }
     }
 }
 

@@ -27,7 +27,7 @@ variables:
   GIT_SUBMODULE_FORCE_HTTPS: "true"
 
 default:
-  image: "team-vpn"
+  image: "team-vpn-macos-14.4.1-xcode-15.4"
 
 # Only start a pipeline if it's for a merge request, if the pipeline has been scheduled, if this is a merge result onto
 # the develop branch, or if this is a tag which begins with a recognized tag prefix like `mac` or `ios`.
@@ -57,7 +57,7 @@ include:
   # - component: gitlab.protontech.ch/proton/devops/cicd-components/community/git-lhc/describe (not in the catalog yet)
   - project: 'proton/devops/cicd-components/community/git-lhc'
     file: templates/describe.yml
-    ref: 0.7.0-alpha.9
+    ref: 0.8.0-alpha.3
     inputs:
       output_directory: apple-vpn-ci
       cmd_prefix: "mint run "
@@ -70,18 +70,8 @@ include:
 ##
 
 .job_template:
-  before_script: |
-    # Delete all ssh private keys
-    ssh-add -D
-    # Add private key for access to gitlab
-    echo "$CI_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
-    # Setup git identity
-    git config --local user.email $GIT_CI_EMAIL
-    git config --local user.name $GIT_CI_USERNAME
-    # Save gitlab servers public key
-    [ -n "$(ssh-keygen -F $CI_SERVER_HOST)" ] || ssh-keyscan -H $CI_SERVER_HOST >> ~/.ssh/known_hosts
-    # Change origin to use ssh as the backend
-    git remote rm origin && git remote add origin "git@${CI_SERVER_HOST}:${CI_PROJECT_PATH}.git"
+  before_script:
+    - Integration/Scripts/pipeline_setup.sh
 
 .mint_cache:
   variables:

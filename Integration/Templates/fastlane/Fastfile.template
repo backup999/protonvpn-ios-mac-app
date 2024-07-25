@@ -1,40 +1,16 @@
 {% extends "Fastfile.base" %}
 
-{% block header %}
-# !begin: ProtonVPN header
-# Helperfile contains private lanes for setting plist keys and creating app dmgs
-import("./Helperfile")
-# !end: ProtonVPN header
-{{ block.super }}
-{% endblock %}
-
 ##
 ## ---- Build Options
 ##
 
 {% block options %}
 {{ block.super }}
+    {% if config.distribution.sparkle -%}
     # !begin: ProtonVPN options
-    :slack_channel => "#vpn-apple-builds",
-    :slack_filename => "",
-    :build_number => $timestamp,
-    {% if config.build.ci %}
-    :version_number => "{{ short_version }}",
-    {% else %}
-    :version_number => "{{ version }}",
-    {% endif %}
-    {% if train == "macOS" %}
-    :dmg_config => "Integration/Scripts/dmg_config.py",
     :dmg_output_name => "{{ config.build.productName }}_mac_v{{ short_version }}",
-    {% elif train == "iOS" %}
-    :changelog => <<~CHANGELOG ,
-{{ release.body|indent:4," ",true }}
-    CHANGELOG
-    {% if config.distribution.appStore.testFlightGroup %}
-    :testflight_groups => ["{{ config.distribution.appStore.testFlightGroup }}"],
-    {% endif %}
-    {% endif %}
     # !end: ProtonVPN options
+    {% endif -%}
 {% endblock %}
 
 {% block secrets %}
@@ -48,7 +24,7 @@ import("./Helperfile")
     {{ block.super }}
     # !begin: ProtonVPN initialize
     # Configuration is one of the only values that is always passed over the command line. This is because pipeline
-    # configs are generated once per train, and we wouldn't want to start more than one pipeline per train to avoid
+    # configs are generated once per train, and we wouldn't want to create more than one pipeline per train to avoid
     # causing too much congestion.
     {% if train == "iOS" %}
     if $options[:configuration] == "Staging"
@@ -66,9 +42,11 @@ import("./Helperfile")
     else
         $options[:export_method] = "development"
     end
-    {%- if train == "macOS" %}
+    {%- if config.distribution.sparkle %}
     # Notarize the dmg, which automatically encompasses the app itself.
-    $options[:notarize_package] = "#{$options[:output_directory]}/{{ config.build.productName }}_mac_v{{ short_version }}.dmg"
+    dmg_output_path = "#{$options[:output_directory]}/{{ config.build.productName }}_mac_v{{ short_version }}.dmg"
+    $options[:notarize_package] = dmg_output_path
+    $options[:sparkle_binary_path] = dmg_output_path
     {%- endif %}
     # !end: ProtonVPN initialize
 {% endblock %}
@@ -133,30 +111,18 @@ import("./Helperfile")
 {% endblock %}
 
 {% block postbuild %}
-    {% if train == "macOS" %}
-    # Note: this is what is getting notarized, instead of the app
-    create_dmg()
-    {% endif %}
-
-    # Build notarization
-    {{ block.super }}
-
-    {% if train == "macOS" %}
-    # Sparkle signature goes here instead of in shipit step - signature is uploaded as part of binary promotion
-    # Note: this should happen after notarization, since stapling the ticket to the dmg alters it (and thus the hash)
-    $options[:sparkle_binary_path] = File.expand_path("#{$repo_path}/#{$options[:output_directory]}/#{$options[:dmg_output_name]}.dmg")
-    binary_path = rel_to_repo(get_or_die($options, :sparkle_binary_path))
-    ed_key = get_or_die($secrets, :appcast_ed_key)
-    output_directory = rel_to_repo(get_or_die($options, :output_directory))
-
-    hash = Digest::SHA256.hexdigest(File.read(binary_path))
-    signature = `echo #{ed_key} | sign_update -f - #{binary_path}`.strip
-    die "Could not sign binary: #{signature}" unless $?.success?
-
-    signature << " hash=\"#{hash}\""
-    File.open("#{output_directory}/sparkle.signature", 'w') { |file|
-        file.write(signature)
-    }
+{{ block.super }}
+    {% if config.distribution.sparkle %}
+    if $options[:configuration] == "Release"
+        # Sparkle signature goes here instead of in shipit step - signature is uploaded as part of binary promotion
+        # Note: this should happen after notarization, since stapling the ticket to the dmg alters it (and thus the hash)
+        if (describe_dir = $options[:describe_directory])
+            $options[:sparkle_item_file] = "#{describe_dir}/sparkle-item.xml"
+        end
+        if (sparkle_item_file = $options[:sparkle_item_file])
+            sparkle_sign_update()
+        end
+    end
     {% endif %}
 {% endblock %}
 
@@ -185,7 +151,7 @@ import("./Helperfile")
     $options[:create_simulator] = true
 
     {% if config.build.ci %}
-    $options[:destination_name] = "{{ config.build.productName }}-{{ config.build.platform|lowercase }}-{{ config.build.pipelineIdentifier }}"
+    $options[:destination_name] = "{{ config.build.productName }}-{{ config.build.platform|lowercase }}-{{ config.build.ci.pipelineId }}"
     {% else %}
     $options[:destination_name] = "{{ config.build.productName }}-{{ config.build.platform|lowercase }}"
     {% endif %}
@@ -209,43 +175,8 @@ import("./Helperfile")
 {% endblock %}
 
 ##
-## ---- Test Teardown
-##
-{% block posttest +%}
-    # !begin: ProtonVPN posttest
-    if (testplan = $options[:testplan]) and (tests = tests_in_testplan("#{$repo_path}/{{ config.build.testplansDirectory }}/#{testplan}.xctestplan"))
-        $options[:coverage_exclude_targets] = tests
-    end
-
-    unless $options[:build_for_testing]
-        interpret_code_coverage()
-    end
-    # !end: ProtonVPN posttest
-{{ block.super }}
-
-{% endblock %}
-
-##
 ## ---- Shipping setup
 ##
-
-# Note: macOS uploads its binary in a separate step after we create the sparkle file, we won't know whether it's
-# uploaded until we get the callback for the release announcement.
-{% block preship +%}
-    # !begin: ProtonVPN preship
-    {% if train == "iOS" or train == "tvOS" %}
-    $options[:ipa] = File.expand_path("#{$repo_path}/#{$options[:output_directory]}/#{$options[:output_name]}.ipa")
-    {% endif %}
-    # !end: ProtonVPN preship
-{{ block.super }}
-{% endblock %}
-
-{% block deliver_args %}
-    # !begin: ProtonVPN deliver
-    app_version: $options[:version_number],
-    build_number: $options[:build_number],
-    # !end: ProtonVPN deliver
-{% endblock %}
 
 {% block sparkle %}
     # Instead of doing sparkle during the shipit step, we generate the signature during the buildit step for
@@ -253,10 +184,3 @@ import("./Helperfile")
     # as of this writing and doesn't allow for shipit to run between the binary upload and the metadata upload pipeline
     # steps. See the artifactlift-release-metadata section of the gitlab pipeline template for more information.
 {% endblock %}
-
-{# Commented out for now.
-{% block slack_args %}
-{{ block.super }}
-use_webhook_configured_username_and_icon: true,
-{% endblock %}
-#}

@@ -1,0 +1,72 @@
+{% extends "gitlab-build-job.base.yml" %} {# Default build template #}
+
+{% block build_app_configurations %}{{ config.build.userProperties.appConfigurations }}{% endblock %}
+
+{% block build_header %}
+  extends:
+    - .job_template
+    - .build_cache_template
+{% endblock %}
+
+{% block build_tags %}
+    - vpn-apple-builds-new
+    - $PIPELINE_HOST
+{% endblock %}
+
+{% block fastlane_build_args %}
+{{ block.super }}
+{%- if config.build.ci.tagName %}
+        "describe_directory:$DESCRIBE_DIR/release"
+{% else %}
+        "describe_directory:$DESCRIBE_DIR/{{ config.name }}"
+{% endif %}
+{% endblock %}
+
+{% block build_script %}
+    - | # Restore modification times of files, according to git history...
+      git restore-mtime --force
+
+      pushd "external"
+      for submodule in $(ls); do
+          pushd "$submodule"
+          echo "Updating mtimes for $submodule..."
+          git restore-mtime --force
+          popd
+      done
+      popd
+
+      CHECKOUTS="$DERIVED_DATA_PATH/SourcePackages/checkouts"
+      if [ -d "$CHECKOUTS" ]; then
+          pushd "$CHECKOUTS"
+          for dependency in $(ls); do
+              pushd "$dependency"
+              echo "Updating mtimes for $dependency..."
+              git restore-mtime --force
+              popd
+          done
+          popd
+      fi
+{{ block.super }}
+{% endblock %}
+
+{#
+ # For merge results, always build everything.
+ # Merge requests can build the app optionally by manual action.
+ # Lastly, everything with tags is manually built.
+ #}
+{% block build_rules %}
+{# We have to use the template here, because $CI_PIPELINE_SOURCE is always "parent_pipeline". #}
+{% if config.build.ci.eventType == "merge_request_event" %}
+{% if config.build.ci.refName == config.userProperties.releaseBranch %}
+    - when: on_success
+{% else %}
+    - if: $TARGET == "app"
+      when: manual
+      allow_failure: true
+    - if: $TARGET == "tests"
+      when: on_success
+{% endif %}
+{% else %}
+{{ block.super }}
+{% endif %}
+{% endblock %}
