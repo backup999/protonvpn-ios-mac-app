@@ -1,13 +1,13 @@
-:apple-computer-inc: {{ config["human_platform"] }} `{{ version }}` has just been {{ config["slack_release_action"] }}.
+:apple-computer-inc: {{ config.build.platform }} `{{ version }}` is now available for {{ channel }} use.
 
 {% if release.body %}
 ```
 {{ release.body }}
 ```
 {% endif %}
-{% if config["CI_PAGES_URL"] %}
-More release information is available <{{ config["CI_PAGES_URL"] }}/{{ config["CI_COMMIT_REF_SLUG"] }}/documentation/release|here>.
+{% if config.build.ci.tagName %}
+More release information is available <{{ config.build.ci.pagesUrl }}/{{ config.build.ci.refSlug }}/documentation/release|here>.
 {% endif %}
-{% if config["train"] == "mac" %}{# We're assuming there's a target since this is only run on tag jobs #}
-Product URL: <{{ config["CI_NEXUS_URL"] }}/repository/vpn-release-candidates/macos/{%- include "timestamp" -%}/ProtonVPN_mac_v{{ short_version }}.dmg>
+{% if config.distribution.sparkle %}
+Product URL: <{{ config.distribution.sparkle.userProperties.internalDownloadUrl }}/repository/vpn-release-candidates/macos/{%- include "timestamp" -%}/ProtonVPN_mac_v{{ short_version }}.dmg>
 {% endif %}

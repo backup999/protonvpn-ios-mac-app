@@ -99,7 +99,7 @@ include:
 
 .mint_cache_template:
   variables: &mint_cache_variables
-    MINT_PATH: .caches/mint
+    MINT_PATH: $CI_PROJECT_DIR/.caches/mint
     MINT_LINK_PATH: $MINT_PATH/bin
     MINT_CACHE_POLICY: pull-push
   cache: &mint_cache_cache
@@ -143,9 +143,11 @@ include:
 # BUILD STEP
 ############
 # Creates app artifacts for shipping, and test bundles for running tests.
+{% if channel == "alpha" %}
 {% include "gitlab-build-job.yml" %}
+{% endif %}
 
-{% if config.build.ci.tagName %}
+{% if config.build.ci.tagName or config.build.ci.refName == config.userProperties.releaseBranch %}
 # PUBLISH STEP
 ##############
 # Sends app binaries to the correct place, according to the release channel.
@@ -155,7 +157,9 @@ include:
 # TEST STEP
 ###########
 # Runs unit and partial/full UI tests depending on the context.
+{% if channel == "alpha" %}
 {% include "gitlab-test-jobs.yml" %}
+{% endif %}
 
 # ANNOUNCE STEP
 ##############

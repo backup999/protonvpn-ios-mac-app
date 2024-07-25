@@ -57,13 +57,12 @@ include:
   # - component: gitlab.protontech.ch/proton/devops/cicd-components/community/git-lhc/describe (not in the catalog yet)
   - project: 'proton/devops/cicd-components/community/git-lhc'
     file: templates/describe.yml
-    ref: 0.8.0-alpha.3
+    ref: 0.8.0-alpha.8
     inputs:
       output_directory: apple-vpn-ci
       cmd_prefix: "mint run "
       templates: "pages.docc fastlane $PIPELINE_TEMPLATE slack-message.txt sparkle-item.xml"
       trains: "ios mac tv"
-      predescribe: "add_arg '--define' \"CI_NEXUS_URL=$CI_NEXUS_URL\""
 
 ##
 ## ---- Job templates shamefully stolen from Integration/Templates/gitlab-pipeline.yml
@@ -75,7 +74,7 @@ include:
 
 .mint_cache:
   variables:
-    MINT_PATH: .caches/mint
+    MINT_PATH: $CI_PROJECT_DIR/.caches/mint
     MINT_LINK_PATH: $MINT_PATH/bin
     MINT_CACHE_POLICY: pull-push
   cache:
@@ -129,7 +128,7 @@ prepare:
     - |
       # Lint commits, code quality, and translations on branches only (not tags)
       if [ -z "$CI_COMMIT_TAG" ]; then
-          mint run git-lhc lint --verbose # Lint commit history
+          mint run git-lhc lint --verbose --train ios # Lint commit history
           Integration/Scripts/code_quality.sh # Lint code quality
           Integration/Scripts/lint_translations.sh # Lint string files
       fi
@@ -201,6 +200,8 @@ trigger:tag:
         job: prepare
   rules:
     - if: $CI_COMMIT_TAG
+      when: on_success
+    - when: never
       
 trigger:branch:
   extends:
@@ -215,7 +216,4 @@ trigger:branch:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || 
-          $CI_PIPELINE_SOURCE == "schedule" ||
-          $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: always
+    - when: on_success

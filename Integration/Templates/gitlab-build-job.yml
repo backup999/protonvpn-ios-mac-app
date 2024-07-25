@@ -50,15 +50,15 @@
 {% endblock %}
 
 {#
- # For merge results, always build everything.
+ # For merge results, everything is manual.
  # Merge requests can build the app optionally by manual action.
- # Lastly, everything with tags is manually built.
+ # Lastly, build the app automatically for tags, but keep test builds manual.
  #}
 {% block build_rules %}
 {# We have to use the template here, because $CI_PIPELINE_SOURCE is always "parent_pipeline". #}
 {% if config.build.ci.eventType == "merge_request_event" %}
 {% if config.build.ci.refName == config.userProperties.releaseBranch %}
-    - when: on_success
+    - when: manual
 {% else %}
     - if: $TARGET == "app"
       when: manual
@@ -66,7 +66,14 @@
     - if: $TARGET == "tests"
       when: on_success
 {% endif %}
+{% elif config.build.ci.tagName %}
+    - if: $TARGET == "app"
+      when: on_success
+    - if: $TARGET == "tests"
+      when: manual
+      allow_failure: true
 {% else %}
 {{ block.super }}
 {% endif %}
 {% endblock %}
+

@@ -6,40 +6,46 @@
     - .mint_cache_template
 {% endblock %}
 
+{% block announce_failure_header %}
+  extends:
+    - .job_template
+    - .mint_cache_template
+{% endblock %}
+
 {% block announce_release_tags %}
     - vpn-apple-metal-new
     - $PIPELINE_HOST
 {% endblock %}
 
+{% block announce_release_vars %}
+    GIT_SUBMODULE_STRATEGY: none
+    GIT_DEPTH: 1
+    LHC: .caches/mint/bin/git-lhc
+{% endblock %}
+
 {% block announce_release_needs %}
 {{ block.super }}
-    {% if config.build.ci.tagName %}
-    - job: pages
     {% if config.distribution.sparkle %}
     {%
-        if config.build.ci.eventType == "merge_request_event" and
-        config.build.ci.refName == config.userProperties.releaseBranch
+        if (channel == "alpha" and config.build.ci.tagName) or
+          config.build.ci.refName == config.userProperties.releaseBranch
     %}
     # Merge result on release branch: depend on artifactlift upload job
     - job: artifactlift-release-candidate-artifacts
-    {% elif config.build.ci.tagName %}{# and target|attrs:config.trailers.releasePipeline #}# {{ config.trailers }}
+    {% elif config.build.ci.tagName and target|attrs:config.trailers.releasePipeline %}
     # Tag push: depend on artifactlift promotion jobs
     - job: artifactlift-release-artifacts
     - job: artifactlift-release-metadata
-    {% endif %}
     {% endif %}
     {% endif %}
 {% endblock %}
 
 {% block announce_release_footer %}
   rules:
+    - if: $CI_COMMIT_BRANCH == "{{ config.userProperties.releaseBranch }}"
+      when: always
     - if: $CI_COMMIT_TAG
       when: always
     - when: manual
       allow_failure: true
 {% endblock %}
-
-{% block announce_failure_header %}
-{{ block.announce_release_header %}
-{% endblock %}
-

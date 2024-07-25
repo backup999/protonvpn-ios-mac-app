@@ -17,6 +17,7 @@
 {{ block.super }}
     # !begin: ProtonVPN secrets
     :atlas_secret => ENV["ATLAS_SECRET"],
+    :dynamic_domain => ENV["DYNAMIC_DOMAIN"],
     # !end: ProtonVPN secrets
 {% endblock %}
 
@@ -48,6 +49,12 @@
     $options[:notarize_package] = dmg_output_path
     $options[:sparkle_binary_path] = dmg_output_path
     {%- endif %}
+    # Listen to $MINT_LINK_PATH and include it in $PATH if it's not already there
+    if (mint_path = ENV["MINT_LINK_PATH"]) and (path = ENV["PATH"]) and not path.include?(mint_path)
+        ENV["PATH"] = "#{mint_path}:#{path}"
+    end
+
+    puts "PATH: #{ENV['PATH']}"
     # !end: ProtonVPN initialize
 {% endblock %}
 
@@ -94,22 +101,6 @@
 ## ---- Build Setup (*not* test builds)
 ##
 
-{% block prebuild %}
-{{ block.super }}
-    # !begin: ProtonVPN prebuild
-    unless $options[:configuration] == "Release" or not $options[:atlas_secret]
-        set_plist_keys(
-            xcodeproj: $options[:xcodeproj],
-            scheme: $options[:scheme],
-            configuration: $options[:configuration],
-            extra_plist_entries: {
-                "ProtonVPNAtlasSecret" => $options[:atlas_secret],
-            },
-        )
-    end
-    # !end: ProtonVPN prebuild
-{% endblock %}
-
 {% block postbuild %}
 {{ block.super }}
     {% if config.distribution.sparkle %}
@@ -132,19 +123,23 @@
 
 {% block pretest +%}
     # !begin: ProtonVPN pretest
-    # {{ train }}
-    unless not $options[:atlas_secret]
-        plist_entries = {
-            "ProtonVPNAtlasSecret" => $options[:atlas_secret],
-        }
+    if ((testplan = $options[:testplan]) and ($secrets[:atlas_secret] or $secrets[:dynamic_domain]))
+        path = "#{$repo_path}/{{ config.build.testplansDirectory }}/#{testplan}.xctestplan"
+        if File.exist?(path)
+            contents = File.read(path)
 
-        set_plist_keys(
-            xcodeproj: $options[:xcodeproj],
-            scheme: $options[:scheme],
-            configuration: $options[:configuration],
-            extra_plist_entries: plist_entries,
-            extra_test_plist_entries: plist_entries,
-        )
+            if (atlas_secret = $secrets[:atlas_secret])
+                contents.gsub("ATLAS_SECRET_PLACEHOLDER", "ATLAS_SECRET=#{atlas_secret}")
+            end
+
+            if (dynamic_domain = $secrets[:dynamic_domain])
+                contents.gsub("DYNAMIC_DOMAIN_PLACEHOLDER", "DYNAMIC_DOMAIN=#{dynamic_domain}")
+            end
+
+            File.open(path, "w") { |file|
+                file.write(contents)
+            }
+        end
     end
 
     {% if train == "iOS" or train == "tvOS" %}

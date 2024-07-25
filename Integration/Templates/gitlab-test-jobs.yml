@@ -1,6 +1,7 @@
 {% extends "gitlab-test-job.base.yml" %} {# Default test template #}
 
 {% block test_job_name %}.test_job_template{% endblock %}
+{% block testplan_name %}{{ config.build.productName }}-{{ config.build.platform }}-$TEST_SUITE{% endblock %}
 
 {% block test_tags %}
     - vpn-{{ config.build.platform|lowercase }}-tests-new
@@ -9,8 +10,11 @@
 
 {% block test_vars %}
 {{ block.super }}
+    GIT_DEPTH: 1
+    GIT_SUBMODULE_STRATEGY: none
     DERIVED_DATA_CACHE_POLICY: pull
     MINT_CACHE_POLICY: pull
+    TEST_SUITE: Unit-All
 {% endblock %}
 
 {% block test_header %}
@@ -20,20 +24,24 @@
 {% endblock %}
 
 {#
- # For merge results, always build everything.
- # Merge requests can build the app optionally by manual action.
- # Lastly, everything with tags is manually built.
+ # For merge results, all tests are manual.
+ # Merge requests run unit and UI smoke tests.
+ # Scheduled/web pipelines run unit and full UI tests.
  #}
 {% block test_rules %}
-{% if config.build.ci.eventType == "merge_request_event" %}
-{% if config.build.ci.refName == config.userProperties.releaseBranch %}
-    - when: on_success
-{% else %}
-    - if: $TARGET == "app"
+{% if config.build.ci.eventType == "merge_request_event" and config.build.ci.refName != config.userProperties.releaseBranch %}
+    - if: $TEST_SUITE == "UI-All"
       when: manual
+      allow_failure: true
     - when: on_success
-{% endif %}
+{% elif config.build.ci.eventType == "schedule" or config.build.ci.eventType == "web" %}
+    - if: $TEST_SUITE == "UI-Smoke"
+      when: manual
+      allow_failure: true
+    - when: on_success
 {% else %}
+    - when: manual
+      allow_failure: true
 {% endif %}
 {% endblock %}
 
@@ -44,6 +52,7 @@
     - .test_job_template
   stage: test_ui
   needs:
+    - !reference [.test_job_template, needs]
     - job: 'deploy:review' # Make sure env gets deployed before starting UI tests
 
 # Unit tests run automatically on every job, provided the upstream pipelines (e.g. builds) are run.
@@ -52,13 +61,13 @@ test:{{ config.name }}:unit:
     - .test_job_template
   stage: test
   variables:
-    TEST_PLAN: {{ config.build.productName }}-{{ config.build.platform }}-Unit-All
+    TEST_SUITE: Unit-All
 
 # Smoke UI tests run for all merge request events, including merged results.
 test:{{ config.name }}:ui:smoke:
   stage: test_ui
   variables:
-    TEST_PLAN: {{ config.build.productName }}-{{ config.build.platform }}-UI-Smoke
+    TEST_SUITE: UI-Smoke
   extends:
     - .ui_test_template
   rules:
@@ -73,7 +82,7 @@ test:{{ config.name }}:ui:smoke:
 test:{{ config.name }}:ui:all:
   stage: test_ui
   variables:
-    TEST_PLAN: {{ config.build.productName }}-{{ config.build.platform }}-UI-All
+    TEST_SUITE: UI-All
   extends:
     - .ui_test_template
   {% if config.build.ci.eventType != "schedule" %}

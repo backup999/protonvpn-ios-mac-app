@@ -4,12 +4,10 @@
   extends:
     - .job_template
     - .mint_cache_template
-  {% if config.distribution.appStore %}
   environment:
     # Certain environments, like beta and production, require approval for distribution.
     name: {{ config.releaseChannel }}
     url: "$CI_PAGES_URL/$CI_COMMIT_REF_SLUG/documentation/protonvpnrelease/"
-  {% endif %}
 {% endblock %}
 
 {% block publish_tags %}
@@ -25,10 +23,10 @@
 {% block publish_footer %}
 {% if config.distribution.sparkle %}
 {%
-    if config.build.ci.eventType == "merge_request_event" and
-    config.build.ci.refName == config.userProperties.releaseBranch
+    if (channel == "alpha" and config.build.ci.tagName) or
+       config.build.ci.refName == config.userProperties.releaseBranch
 %}
-{# Modify the Nexus release upload jobs #}
+{# Modify each of the Nexus release upload jobs - notice the "for" #}
 {% for configuration in block.configurations|split:"," %}
 {%- if configuration == "Staging" -%}{# Add prefix to the job #}
   staging-
@@ -36,7 +34,11 @@
 artifactlift-release-candidate-artifacts:
   variables:
     GIT_STRATEGY: none
-  rules: # overwrite rules, normally this only runs on release branches like release/X.Y.Z.
+  rules: # Always run release uploads for tags, merges can be manual
+    - if: $CI_COMMIT_TAG
+      when: always
+    - when: manual
+      allow_failure: true
   needs: # Make sure we get the artifacts from the build job.
     - job: "build:{{ config.name }}:all"
       parallel:
