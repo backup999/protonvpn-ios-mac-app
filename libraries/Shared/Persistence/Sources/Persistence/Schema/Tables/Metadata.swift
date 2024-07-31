@@ -1,5 +1,5 @@
 //
-//  Created on 06/01/2024.
+//  Created on 7/26/24.
 //
 //  Copyright (c) 2024 Proton AG
 //
@@ -17,11 +17,13 @@
 //  along with ProtonVPN.  If not, see <https://www.gnu.org/licenses/>.
 
 import Foundation
-import Domain
 
-struct EndpointOverrides: Codable {
-    let endpointId: String
+public struct DatabaseMetadata: Codable, Sendable {
+    let key: Key
+    let value: String
 
-    let protocolMask: Int // used for efficient filtering of servers based on which protocols they support
-    let protocolEntries: PerProtocolEntries // coding handled by GRDB
+    public enum Key: String, Codable, Sendable {
+        case lastModifiedFree
+        case lastModifiedAll
+    }
 }

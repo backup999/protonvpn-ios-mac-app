@@ -1,5 +1,5 @@
 //
-//  Created on 06/01/2024.
+//  Created on 7/26/24.
 //
 //  Copyright (c) 2024 Proton AG
 //
@@ -17,11 +17,18 @@
 //  along with ProtonVPN.  If not, see <https://www.gnu.org/licenses/>.
 
 import Foundation
-import Domain
+import GRDB
 
-struct EndpointOverrides: Codable {
-    let endpointId: String
+extension SchemaVersion {
 
-    let protocolMask: Int // used for efficient filtering of servers based on which protocols they support
-    let protocolEntries: PerProtocolEntries // coding handled by GRDB
+    public static let v2: SchemaVersion = {
+        let migrationBlock: MigrationBlock = { db in
+            try db.create(table: "databaseMetadata") { t in
+                t.column("key", .text).notNull().primaryKey(onConflict: .replace)
+                t.column("value", .text).notNull()
+            }
+        }
+
+        return SchemaVersion(identifier: "database_metadata", migrationBlock: migrationBlock)
+    }()
 }
