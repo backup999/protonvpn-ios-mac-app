@@ -1,7 +1,7 @@
 //
-//  Created on 09/06/2023.
+//  Created on 19/06/2024.
 //
-//  Copyright (c) 2023 Proton AG
+//  Copyright (c) 2024 Proton AG
 //
 //  ProtonVPN is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -16,21 +16,24 @@
 //  You should have received a copy of the GNU General Public License
 //  along with ProtonVPN.  If not, see <https://www.gnu.org/licenses/>.
 
+import ComposableArchitecture
 import Foundation
-
 import Domain
-import VPNAppCore
 
-@available(iOS 17, *)
-extension HomeFeature.State {
-    public var mostRecent: RecentConnection? {
-        connections.first
+public extension PersistenceReaderKey where Self == AppStorageKey<String?> {
+    static var userCountry: Self {
+        appStorage("userCountry")
     }
+}
 
-    public var remainingConnections: [RecentConnection] {
-        guard connections.count > 1 else {
-            return []
-        }
-        return Array(connections.dropFirst())
+public extension PersistenceReaderKey where Self == AppStorageKey<String?> {
+    static var userIP: Self {
+        appStorage("userIP")
+    }
+}
+
+public extension PersistenceReaderKey where Self == PersistenceKeyDefault<InMemoryKey<ProtectionState>> {
+    static var protectionState: Self {
+        PersistenceKeyDefault(.inMemory("protectionState"), .unprotected)
     }
 }
