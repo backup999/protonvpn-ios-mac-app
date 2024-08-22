@@ -39,7 +39,7 @@ local base = new Train {
     }
 
     userProperties = new Mapping {
-        ["releaseBranch"] = "jkb/feat/VPNAPPL-1507-new-ci"
+        ["releaseBranch"] = "sk/ci/2316-new-ci"
     }
 }
 
@@ -100,8 +100,9 @@ local ios = (base) {
 
     distribution = new AppStore {
         testflightGroup =
-            if (base.releaseChannel == "alpha") "Internal Members" else
-            if (base.releaseChannel == "beta") "Public Beta" else null
+            if (base.releaseChannel == "alpha") "Temporary Group Alpha" else
+            if (base.releaseChannel == "beta") "Temporary group" else null
+        announceForum = "#test-shahin"
     }
 }
 

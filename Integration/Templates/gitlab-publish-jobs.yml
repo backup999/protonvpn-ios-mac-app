@@ -51,7 +51,7 @@ artifactlift-release-candidate-artifacts:
 artifactlift-release-artifacts:
   needs: # Require the parent artifacts for the sparkle template
     - pipeline: $PARENT_PIPELINE_ID
-      job: 'prepare'
+    - job: 'prepare'
   variables:
     # We don't need to clone the repo, since this job operates on artifacts only.
     GIT_STRATEGY: none
