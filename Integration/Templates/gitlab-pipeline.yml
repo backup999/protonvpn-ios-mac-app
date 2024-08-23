@@ -21,8 +21,6 @@ stages:
 
 variables:
   PIPELINE_HOST: "ci-vilnius-1" # {{ "ci-vilnius-1,ci-vilnius-2,ci-vilnius-2"|split:","|random }}
-  ARTIFACTLIFT_REPO: "gitlab.protontech.ch/proton/devops/cicd-components/tools/artifactlift"
-  ARTIFACTLIFT_VERSION: "0.1.13"
   # Use parallel compression/decompression to speed up caching
   FF_USE_FASTZIP: "true"
   # Low-effort compression to reduce bandwidth spent uploading/downloading, with some parallelism for speed
@@ -54,7 +52,7 @@ include:
     config.build.ci.refName == config.userProperties.releaseBranch
 -%}{# Include the Nexus release upload jobs #}
 {% for configuration in block.app_configurations|split:"," %}
-  - component: "$ARTIFACTLIFT_REPO/release-candidate@$ARTIFACTLIFT_VERSION"
+  - component: "gitlab.protontech.ch/proton/devops/cicd-components/tools/artifactlift/release-candidate@0.1.13"
     inputs:
       stage: publish
       product: vpn
@@ -67,7 +65,7 @@ include:
       {% endif %}
 {% endfor %}
 {% elif config.build.ci.tagName -%}{# Include the Nexus release promotion jobs #}
-  - component: "$ARTIFACTLIFT_REPO/release@ARTIFACTLIFT_VERSION"
+  - component: "gitlab.protontech.ch/proton/devops/cicd-components/tools/artifactlift/release@0.1.13"
     inputs:
       stage: publish
       product: vpn
