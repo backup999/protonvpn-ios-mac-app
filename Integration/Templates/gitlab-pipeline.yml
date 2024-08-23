@@ -141,7 +141,7 @@ include:
 # BUILD STEP
 ############
 # Creates app artifacts for shipping, and test bundles for running tests.
-{% if channel == "alpha" %}
+{% if channel == "alpha" or config.build.ci.eventType == "merge_request_event" %}
 {% include "gitlab-build-job.yml" %}
 {% endif %}
 
