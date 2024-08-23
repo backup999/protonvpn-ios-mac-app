@@ -21,10 +21,6 @@ variables:
   TART_EXECUTOR_HEADLESS: "false"
   DESCRIBE_DIR: "apple-vpn-ci"
   PIPELINE_TEMPLATE: "gitlab-pipeline.yml"
-  # We don't need to clone submodules deeply, we just need to get at their source.
-  GIT_SUBMODULE_STRATEGY: normal
-  GIT_SUBMODULE_DEPTH: 1
-  GIT_SUBMODULE_FORCE_HTTPS: "true"
   IMAGES: $IMAGES
 
 default:

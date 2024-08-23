@@ -1,6 +1,8 @@
 {%- if object.target -%}
 {%- if target|attrs:config.trailers.releasePipeline -%}
 {{ target|attrs:config.trailers.releasePipeline }}.
+{%- elif config.releaseChannel == "alpha" and config.build.ci.pipelineId -%}
+{{ config.build.ci.pipelineId }}.
 {%- endif -%}
 {{ object.target|get:"oid"|rev_parse|get:"date"|format_date:"yyMMddHHmm",true }}
 {%- elif object.committer -%}

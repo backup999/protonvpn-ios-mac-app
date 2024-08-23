@@ -6,8 +6,9 @@
 ```
 {% endif %}
 {% if config.build.ci.tagName %}
-More release information is available <{{ config.build.ci.pagesUrl }}/{{ config.build.ci.refSlug }}/documentation/release|here>.
+More release information is available <{{ config.build.ci.pagesUrl }}/{{ config.build.ci.refSlug }}/documentation/protonvpnrelease|here>.
 {% endif %}
 {% if config.distribution.sparkle %}
-Product URL: <{{ config.distribution.sparkle.userProperties.internalDownloadUrl }}/repository/vpn-release-candidates/macos/{%- include "timestamp" -%}/ProtonVPN_mac_v{{ short_version }}.dmg>
+Product URL: <{{
+config.distribution.sparkle.userProperties.internalDownloadUrl}}/repository/vpn-release-candidates/macos/{{ short_version }}+{%- include "timestamp" -%}/ProtonVPN_mac_v{{ short_version }}.dmg>
 {% endif %}

@@ -112,6 +112,10 @@
         end
         if (sparkle_item_file = $options[:sparkle_item_file])
             sparkle_sign_update()
+            sparkle_download_and_save(
+                appcast_url: "https://protonvpn.com/download/macos-update3.xml"
+            )
+            sparkle_append_item()
         end
     end
     {% endif %}
