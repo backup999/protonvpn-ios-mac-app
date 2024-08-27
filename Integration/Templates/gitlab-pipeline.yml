@@ -155,7 +155,7 @@ include:
 # TEST STEP
 ###########
 # Runs unit and partial/full UI tests depending on the context.
-{% if channel == "alpha" %}
+{% if channel == "alpha" or config.build.ci.eventType == "merge_request_event" %}
 {% include "gitlab-test-jobs.yml" %}
 {% endif %}
 
