@@ -162,4 +162,6 @@ include:
 # ANNOUNCE STEP
 ##############
 # Runs jobs announcing new builds and/or pipeline failures.
+{% if config.build.ci.eventType != "merge_request_event" %}
 {% include "gitlab-announce-jobs.yml" %}
+{% endif %}
