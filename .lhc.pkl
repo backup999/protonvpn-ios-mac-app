@@ -100,8 +100,8 @@ local ios = (base) {
 
     distribution = new AppStore {
         testflightGroup =
-            if (base.releaseChannel == "alpha") "Temporary Group Alpha" else
-            if (base.releaseChannel == "beta") "Temporary group" else null
+            if (base.releaseChannel == "alpha") "Internal Members" else
+            if (base.releaseChannel == "beta") "Public Beta" else null
         announceForum = "#test-shahin"
     }
 }
