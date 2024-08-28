@@ -39,7 +39,7 @@ local base = new Train {
     }
 
     userProperties = new Mapping {
-        ["releaseBranch"] = "sk/ci/2316-new-ci2"
+        ["releaseBranch"] = "jkb/feat/VPNAPPL-1507-new-ci"
     }
 }
 
