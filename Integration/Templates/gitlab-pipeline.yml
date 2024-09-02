@@ -145,7 +145,7 @@ include:
 {% include "gitlab-build-job.yml" %}
 {% endif %}
 
-{% if config.build.ci.tagName or config.build.ci.refName == config.userProperties.releaseBranch %}
+{% if config.build.ci.tagName %}
 # PUBLISH STEP
 ##############
 # Sends app binaries to the correct place, according to the release channel.
