@@ -1,7 +1,7 @@
 {
   "configurations" : [
     {
-      "id" : "5C4A08B0-6A87-40C7-A8DF-F1AD86A25C7A",
+      "id" : "688035A1-D45C-46A9-A35F-09E452170343",
       "name" : "Configuration 1",
       "options" : {
 
@@ -14,20 +14,14 @@
   "testTargets" : [
     {
       "skippedTests" : [
-        "ConnectionTests",
         "FreeRescopeTests",
         "HumanVerificationTests",
         "InternalAndExternalSignUpTests",
         "LoginExtAccountTests",
         "LoginExternalAccountTests",
         "LoginTests",
-        "PlanTests",
-        "ProfilesTests",
-        "ProtonVPNUITests",
-        "SettingsTests",
-        "SignupTests",
-        "SubscriptionTests",
-        "TokenRefreshTests"
+        "MainMeasurements",
+        "PerformanceTests"
       ],
       "target" : {
         "containerPath" : "container:iOS.xcodeproj",
