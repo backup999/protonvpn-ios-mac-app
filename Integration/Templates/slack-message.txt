@@ -1,0 +1,13 @@
+:apple-computer-inc: {{ config.build.platform }} `{{ version }}` is now available for {{ channel }} use.
+
+{% if release.body %}
+```
+{{ release.body }}
+```
+{% endif %}
+{% if config.build.ci.tagName %}
+More release information is available <{{ config.build.ci.pagesUrl }}/{{ config.build.ci.refSlug }}/documentation/release|here>.
+{% endif %}
+{% if config.distribution.sparkle %}
+Product URL: <{{ config.distribution.sparkle.userProperties.internalDownloadUrl }}/repository/vpn-release-candidates/macos/{%- include "timestamp" -%}/ProtonVPN_mac_v{{ short_version }}.dmg>
+{% endif %}

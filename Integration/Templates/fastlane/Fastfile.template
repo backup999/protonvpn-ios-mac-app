@@ -1,0 +1,181 @@
+{% extends "Fastfile.base" %}
+
+##
+## ---- Build Options
+##
+
+{% block options %}
+{{ block.super }}
+    {% if config.distribution.sparkle -%}
+    # !begin: ProtonVPN options
+    :dmg_output_name => "{{ config.build.productName }}_mac_v{{ short_version }}",
+    # !end: ProtonVPN options
+    {% endif -%}
+{% endblock %}
+
+{% block secrets %}
+{{ block.super }}
+    # !begin: ProtonVPN secrets
+    :atlas_secret => ENV["ATLAS_SECRET"],
+    :dynamic_domain => ENV["DYNAMIC_DOMAIN"],
+    # !end: ProtonVPN secrets
+{% endblock %}
+
+{% block initialize %}
+    {{ block.super }}
+    # !begin: ProtonVPN initialize
+    # Configuration is one of the only values that is always passed over the command line. This is because pipeline
+    # configs are generated once per train, and we wouldn't want to create more than one pipeline per train to avoid
+    # causing too much congestion.
+    {% if train == "iOS" %}
+    if $options[:configuration] == "Staging"
+        $app_identifier += ".debug"
+    end
+    {% endif %}
+    if $options[:configuration] == "Staging" || $options[:configuration] == "Release"
+        {% if config.build.platform == "iOS" or config.build.platform == "tvOS" %}
+        $options[:export_method] = "app-store"
+        $options[:code_sign_identity] = "Apple Distribution"
+        {% elif config.build.platform == "macOS" %}
+        $options[:export_method] = "developer-id"
+        $options[:notarize] = true
+        {% endif %}
+    else
+        $options[:export_method] = "development"
+    end
+    {%- if config.distribution.sparkle %}
+    # Notarize the dmg, which automatically encompasses the app itself.
+    dmg_output_path = "#{$options[:output_directory]}/{{ config.build.productName }}_mac_v{{ short_version }}.dmg"
+    $options[:notarize_package] = dmg_output_path
+    $options[:sparkle_binary_path] = dmg_output_path
+    {%- endif %}
+    # Listen to $MINT_LINK_PATH and include it in $PATH if it's not already there
+    if (mint_path = ENV["MINT_LINK_PATH"]) and (path = ENV["PATH"]) and not path.include?(mint_path)
+        ENV["PATH"] = "#{mint_path}:#{path}"
+    end
+
+    puts "PATH: #{ENV['PATH']}"
+    # !end: ProtonVPN initialize
+{% endblock %}
+
+##
+## ---- Product Targets
+##
+
+{% block targets +%}
+    # !begin: ProtonVPN targets
+    {% if config.build.platform == "iOS" %}
+    $app_identifier => "ProtonVPN",
+    "#{$app_identifier}.OpenVPN-Extension" => "OpenVPN Extension",
+    "#{$app_identifier}.WireGuardiOS-Extension" => "WireGuardiOS Extension",
+    "#{$app_identifier}.widget" => "Quick Connect Widget",
+    "#{$app_identifier}.Siri-Shortcut-Handler" => "Siri Shortcut Handler",
+    {% elif config.build.platform == "macOS" %}
+    $app_identifier => "ProtonVPN-mac",
+    "ch.protonvpn.ProtonVPNStarter" => "ProtonVPNStarter",
+    "#{$app_identifier}.OpenVPN-Extension" => "ProtonVPN OpenVPN",
+    "#{$app_identifier}.WireGuard-Extension" => "ProtonVPN WireGuard",
+    {% elif config.build.platform == "tvOS" %}
+    $app_identifier => "ProtonVPN-tvOS",
+    "#{$app_identifier}.WireGuard-tvOS" => "WireGuard-tvOS",
+    {% endif %}
+    # !end: ProtonVPN targets
+{% endblock %}
+
+{% block test_targets +%}
+    # !begin: ProtonVPN test_targets
+    {% if config.build.platform == "iOS" %}
+    "prt.ProtonVPNUITests" => "ProtonVPNTests",
+    "#{$app_identifier}.ProtonVPNUITests" => "ProtonVPNUITests",
+    {% elif config.build.platform == "macOS" %}
+    "ch.protonvpn.ProtonVPNTests" => "ProtonVPNmacOSTests",
+    "ch.protonmail.vpn.ProtonVPNUITests" => "ProtonVPNmacOSUITests",
+    {% elif config["platform"] == "tvos" %}
+    "#{$app_identifier}.tvOS.test.unit" => "ProtonVPNtvOSTests",
+    "#{$app_identifier}.tvOS.test.ui" => "ProtonVPNtvOSUITests",
+    {% endif %}
+    # !end: ProtonVPN test_targets
+{% endblock %}
+
+##
+## ---- Build Setup (*not* test builds)
+##
+
+{% block postbuild %}
+{{ block.super }}
+    {% if config.distribution.sparkle %}
+    if $options[:configuration] == "Release"
+        # Sparkle signature goes here instead of in shipit step - signature is uploaded as part of binary promotion
+        # Note: this should happen after notarization, since stapling the ticket to the dmg alters it (and thus the hash)
+        if (describe_dir = $options[:describe_directory])
+            $options[:sparkle_item_file] = "#{describe_dir}/sparkle-item.xml"
+        end
+        if (sparkle_item_file = $options[:sparkle_item_file])
+            sparkle_sign_update()
+        end
+    end
+    {% endif %}
+{% endblock %}
+
+##
+## ---- Test Setup (including test builds)
+##
+
+{% block pretest +%}
+    # !begin: ProtonVPN pretest
+    if ((testplan = $options[:testplan]) and ($secrets[:atlas_secret] or $secrets[:dynamic_domain]))
+        path = "#{$repo_path}/{{ config.build.testplansDirectory }}/#{testplan}.xctestplan"
+        if File.exist?(path)
+            contents = File.read(path)
+
+            if (atlas_secret = $secrets[:atlas_secret])
+                contents.gsub("ATLAS_SECRET_PLACEHOLDER", "ATLAS_SECRET=#{atlas_secret}")
+            end
+
+            if (dynamic_domain = $secrets[:dynamic_domain])
+                contents.gsub("DYNAMIC_DOMAIN_PLACEHOLDER", "DYNAMIC_DOMAIN=#{dynamic_domain}")
+            end
+
+            File.open(path, "w") { |file|
+                file.write(contents)
+            }
+        end
+    end
+
+    {% if train == "iOS" or train == "tvOS" %}
+    $options[:create_simulator] = true
+
+    {% if config.build.ci %}
+    $options[:destination_name] = "{{ config.build.productName }}-{{ config.build.platform|lowercase }}-{{ config.build.ci.pipelineId }}"
+    {% else %}
+    $options[:destination_name] = "{{ config.build.productName }}-{{ config.build.platform|lowercase }}"
+    {% endif %}
+
+    {% if train == "iOS" %}
+    # We don't pass this to run_tests, it's just for finding the .xctestrun file.
+    # (Weird things happen if you decide to pass this value to run_tests. I don't recommend it.)
+    $options[:sdk] = "iphonesimulator17"
+    $options[:simulator_device_type] = "iPhone-12"
+    {% else %}
+    $options[:sdk] = "appletvsimulator17"
+    $options[:simulator_device_type] = "Apple-TV-4K-3rd-generation-1080p"
+    {% endif %}
+
+    {% elif train == "macOS" %}
+    $options[:sdk] = "macosx14"
+    $options[:destination_arch] = `uname -m`.strip
+    {% endif %}
+    # !end: ProtonVPN pretest
+{{ block.super }}
+{% endblock %}
+
+##
+## ---- Shipping setup
+##
+
+{% block sparkle %}
+    # Instead of doing sparkle during the shipit step, we generate the signature during the buildit step for
+    # more straightforward binary promotion. The artifactlift code provided by the devops team is tightly coupled
+    # as of this writing and doesn't allow for shipit to run between the binary upload and the metadata upload pipeline
+    # steps. See the artifactlift-release-metadata section of the gitlab pipeline template for more information.
+{% endblock %}

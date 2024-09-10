@@ -1,0 +1,152 @@
+{
+  "configurations" : [
+    {
+      "id" : "1E1A16B7-699A-44A4-813D-6CF4D62041E7",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:macOS.xcodeproj",
+          "identifier" : "EED534801EEC112000013607",
+          "name" : "ProtonVPN-mac"
+        }
+      ]
+    },
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:macOS.xcodeproj",
+      "identifier" : "EED534801EEC112000013607",
+      "name" : "ProtonVPN-mac"
+    }
+  },
+  "testTargets" : [
+    {
+      "skippedTests" : [
+        "AppSessionManagerImplementationTests"
+      ],
+      "target" : {
+        "containerPath" : "container:macOS.xcodeproj",
+        "identifier" : "E15B754C20FA83CB0022C406",
+        "name" : "ProtonVPNmacOSTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/BugReport",
+        "identifier" : "BugReportTests",
+        "name" : "BugReportTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/LegacyCommon",
+        "identifier" : "LegacyCommonTests",
+        "name" : "LegacyCommonTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/Foundations\/Ergonomics",
+        "identifier" : "ErgonomicsTests",
+        "name" : "ErgonomicsTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/Foundations\/LocalFeatureFlags",
+        "identifier" : "LocalFeatureFlagsTests",
+        "name" : "LocalFeatureFlagsTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/Modals",
+        "identifier" : "ModalsTests",
+        "name" : "ModalsTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/NEHelper",
+        "identifier" : "NEHelperTests",
+        "name" : "NEHelperTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/NEHelper",
+        "identifier" : "VPNCryptoTests",
+        "name" : "VPNCryptoTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/NEHelper",
+        "identifier" : "VPNSharedTests",
+        "name" : "VPNSharedTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/Shared\/Persistence",
+        "identifier" : "PersistenceTests",
+        "name" : "PersistenceTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/Foundations\/PMLogger",
+        "identifier" : "PMLoggerTests",
+        "name" : "PMLoggerTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/Review",
+        "identifier" : "ReviewTests",
+        "name" : "ReviewTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/ConnectionDetails",
+        "identifier" : "ConnectionDetailsTests",
+        "name" : "ConnectionDetailsTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/Foundations\/Timer",
+        "identifier" : "TimerTests",
+        "name" : "TimerTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/Foundations\/Timer",
+        "identifier" : "TimerMockTests",
+        "name" : "TimerMockTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/Shared\/Localization",
+        "identifier" : "LocalizationTests",
+        "name" : "LocalizationTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:..\/..\/libraries\/NetShield",
+        "identifier" : "NetShieldTests",
+        "name" : "NetShieldTests"
+      }
+    }
+  ],
+  "version" : 1
+}

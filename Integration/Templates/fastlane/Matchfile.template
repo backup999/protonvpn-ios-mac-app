@@ -1,0 +1,11 @@
+team_name "{{ config.build.teamName }}"
+team_id "{{ config.build.teamId }}"
+platform "{{ config.build.platform|lowercase }}"
+git_branch "{{ config.build.match.branchName }}"
+readonly true
+
+shallow_clone true
+clone_branch_directly true
+
+
+# available options: type, additional_cert_types, readonly, generate_apple_certs, skip_provisioning_profiles, app_identifier, api_key_path, api_key, username, team_id, team_name, storage_mode, git_url, git_branch, git_full_name, git_user_email, shallow_clone, clone_branch_directly, git_basic_authorization, git_bearer_authorization, git_private_key, google_cloud_bucket_name, google_cloud_keys_file, google_cloud_project_id, skip_google_cloud_account_confirmation, s3_region, s3_access_key, s3_secret_access_key, s3_bucket, s3_object_prefix, s3_skip_encryption, gitlab_project, gitlab_host, job_token, private_token, keychain_name, keychain_password, force, force_for_new_devices, include_mac_in_profiles, include_all_certificates, certificate_id, force_for_new_certificates, skip_confirmation, safe_remove_certs, skip_docs, platform, derive_catalyst_app_identifier, template_name, profile_name, fail_on_name_taken, skip_certificate_matching, output_path, skip_set_partition_list, verbose

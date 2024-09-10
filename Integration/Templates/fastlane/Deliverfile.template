@@ -1,0 +1,38 @@
+team_name "{{ config.build.teamName }}"
+team_id "{{ config.build.teamId }}"
+app_identifier "{{ config.build.appIdentifier }}"
+platform "{{ config.build.platform }}"
+force true
+submit_for_review true
+
+# This doesn't support API keys (and we have a team that does it anyway!)
+run_precheck_before_submit false
+
+# ipa should have already been uploaded to testflight
+skip_binary_upload true
+
+skip_screenshots true
+
+{% if release.trailers|get:config.trailers.releaseImmediately %}
+phased_release false
+automatic_release true
+{% else %}
+phased_release true
+automatic_release false
+{% if release.trailers|get:config.trailers.automaticReleaseDate %}
+auto_release_date {{ release.trailers|get:config.trailers.automaticReleaseDate }}
+{% endif %}
+{% endif %}
+
+{% if release.body %}
+release_notes({
+    "default" => <<~CHANGELOG
+{{ release.body }}
+CHANGELOG
+})
+{% endif %}
+
+app_version "{{ short_version }}"
+build_number "{% include "timestamp" %}"
+
+# Available options: api_key_path, api_key, username, app_identifier, app_version, ipa, pkg, build_number, platform, edit_live, use_live_version, metadata_path, screenshots_path, skip_binary_upload, skip_screenshots, skip_metadata, skip_app_version_update, force, overwrite_screenshots, sync_screenshots, submit_for_review, verify_only, reject_if_possible, automatic_release, auto_release_date, phased_release, reset_ratings, price_tier, app_rating_config_path, submission_information, team_id, team_name, dev_portal_team_id, dev_portal_team_name, itc_provider, run_precheck_before_submit, precheck_default_rule_level, individual_metadata_items, app_icon, apple_watch_app_icon, copyright, primary_category, secondary_category, primary_first_sub_category, primary_second_sub_category, secondary_first_sub_category, secondary_second_sub_category, trade_representative_contact_information, app_review_information, app_review_attachment_file, description, name, subtitle, keywords, promotional_text, release_notes, privacy_url, apple_tv_privacy_policy, support_url, marketing_url, languages, ignore_language_directory_validation, precheck_include_in_app_purchases, app

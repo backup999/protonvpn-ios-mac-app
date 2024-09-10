@@ -1,0 +1,4 @@
+# Note: app_identifier isn't defined here because it depends on whether we're building for staging or not.
+
+team_name "{{ config.build.teamName }}"
+team_id "{{ config.build.teamId }}"
