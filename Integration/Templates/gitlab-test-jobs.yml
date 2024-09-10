@@ -4,7 +4,7 @@
 {% block testplan_name %}{{ config.build.productName }}-{{ config.build.platform }}-$TEST_SUITE{% endblock %}
 
 {% block test_tags %}
-    - vpn-{{ config.build.platform|lowercase }}-tests-new
+    - vpn-{{ config.build.platform|lowercase }}-tests
     - $PIPELINE_HOST
 {% endblock %}
 

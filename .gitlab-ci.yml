@@ -120,8 +120,7 @@ prepare:
     GIT_SUBMODULE_STRATEGY: none
   stage: prepare
   tags: 
-    - vpn-apple-xs-new
-    - ci-vilnius-1
+    - vpn-apple-xs
   before_script:
     - !reference [.job_template, before_script]
     - !reference [.lhc_describe, before_script]
