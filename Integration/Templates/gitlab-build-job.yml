@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block build_tags %}
-    - vpn-apple-builds-new
+    - vpn-apple-builds
     - $PIPELINE_HOST
 {% endblock %}
 

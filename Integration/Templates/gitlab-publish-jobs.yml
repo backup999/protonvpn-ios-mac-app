@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block publish_tags %}
-  - vpn-apple-metal-new
+  - vpn-apple-metal
   - $PIPELINE_HOST
 {% endblock %}
 

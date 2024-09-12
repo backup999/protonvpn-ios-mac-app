@@ -20,7 +20,7 @@ stages:
   - cleanup
 
 variables:
-  PIPELINE_HOST: "ci-vilnius-1" # {{ "ci-vilnius-1,ci-vilnius-2,ci-vilnius-2"|split:","|random }}
+  PIPELINE_HOST: {{ config.build.ci.userProperties.pipelineHosts|split:","|random }}
   # Use parallel compression/decompression to speed up caching
   FF_USE_FASTZIP: "true"
   # Low-effort compression to reduce bandwidth spent uploading/downloading, with some parallelism for speed
