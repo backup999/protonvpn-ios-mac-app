@@ -25,6 +25,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: normal
   GIT_SUBMODULE_DEPTH: 1
   GIT_SUBMODULE_FORCE_HTTPS: "true"
+  IMAGES: $IMAGES
 
 default:
   image: "team-vpn-macos-14.4.1-xcode-15.4"
@@ -190,7 +191,13 @@ prepare:
     forward:
       pipeline_variables: true
       yaml_variables: true
-      
+
+.trigger_deploy:
+  stage: deploy
+  strategy: depend
+  variables:
+    PARENT_PIPELINE_ID: $CI_PIPELINE_ID
+
 trigger:tag:
   extends:
     - .trigger_template
