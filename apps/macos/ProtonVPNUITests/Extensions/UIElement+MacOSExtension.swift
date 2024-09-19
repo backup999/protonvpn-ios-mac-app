@@ -1,7 +1,7 @@
 //
-//  Created on 23/08/2023.
+//  Created on 19/9/24.
 //
-//  Copyright (c) 2023 Proton AG
+//  Copyright (c) 2024 Proton AG
 //
 //  ProtonVPN is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -16,25 +16,13 @@
 //  You should have received a copy of the GNU General Public License
 //  along with ProtonVPN.  If not, see <https://www.gnu.org/licenses/>.
 
-import Foundation
+@testable import fusion
 import XCTest
-import fusion
 
-class Verifier: CoreElements {
+extension UIElement {
+    
     @discardableResult
-    func isShowingUpsellModal(ofType modalType: UpsellModalType) -> Self {
-        staticText(modalType.identifyingString).checkExists()
-        return self
-    }
-}
-
-enum UpsellModalType {
-    case profiles
-
-    var identifyingString: String {
-        switch self {
-        case .profiles:
-            return "Get quick access to your frequent connections"
-        }
+    public func tapInCenter() -> UIElement {
+        return tapOnCoordinate(withOffset: CGVector(dx: 0.5, dy: 0.5))
     }
 }
