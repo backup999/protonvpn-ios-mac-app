@@ -53,7 +53,7 @@
   stage: test_ui
   needs:
     - !reference [.test_job_template, needs]
-    - job: 'deploy:review' # Make sure env gets deployed before starting UI tests
+    - job: 'atlas:deploy:pipenv' # Make sure env gets deployed before starting UI tests
 
 # Unit tests run automatically on every job, provided the upstream pipelines (e.g. builds) are run.
 test:{{ config.name }}:unit:

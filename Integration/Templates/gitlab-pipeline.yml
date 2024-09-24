@@ -43,9 +43,25 @@ default:
   image: "team-vpn-$BUILD_HOST_IDENTIFIER"
 
 include:
-  - project: 'proton/devops/atlas-deploy'
-    ref: main
-    file: '/scenarios/pipeline-env.yml'
+  
+  - component: gitlab.protontech.ch/proton/devops/cicd-components/kubernetes/atlas-deploy/pipenv@0.7.0
+    inputs:
+      cleanup-stage: cleanup
+      key: env-pipenv-$PARENT_PIPELINE_ID
+      expiration: "4h"
+      cleanup: manual
+
+  - component: gitlab.protontech.ch/proton/devops/cicd-components/kubernetes/atlas-deploy/pipenv@0.7.0
+    inputs:
+      cleanup-stage: cleanup
+      deploy: manual
+      cleanup: manual
+      images: $IMAGES
+      key: custom-pipenv-$PARENT_PIPELINE_ID
+      suffix: ":custom"
+      expiration: "4h"
+      cleanup: manual
+
 {%- if config.distribution.sparkle -%}
 {%-
     if config.build.ci.eventType == "merge_request_event" and
