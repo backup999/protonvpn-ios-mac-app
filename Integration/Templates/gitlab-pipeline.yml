@@ -87,7 +87,7 @@ include:
       product: vpn
       version: "{{ release.versionString }}"
       platform: macos
-      artifact_list: "ProtonVPN_mac_v{{ short_version }}.dmg {% if configuration != "Staging" %} sparkle.signature sparkle.xml {% endif %}"
+      artifact_list: "ProtonVPN_mac_v{{ short_version }}.dmg sparkle.signature sparkle.xml"
       artifact_metadata_list: "sparkle.xml"
       artifact_metadata_path: "macos/updates/v4"
       artifact_local_directory: artifacts

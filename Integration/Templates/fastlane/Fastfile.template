@@ -48,6 +48,7 @@
     dmg_output_path = "#{$options[:output_directory]}/{{ config.build.productName }}_mac_v{{ short_version }}.dmg"
     $options[:notarize_package] = dmg_output_path
     $options[:sparkle_binary_path] = dmg_output_path
+    $options[:appcast_url] = "https://protonvpn.com/download/macos-update4.xml"
     {%- endif %}
     # Listen to $MINT_LINK_PATH and include it in $PATH if it's not already there
     if (mint_path = ENV["MINT_LINK_PATH"]) and (path = ENV["PATH"]) and not path.include?(mint_path)
@@ -112,9 +113,7 @@
         end
         if (sparkle_item_file = $options[:sparkle_item_file])
             sparkle_sign_update()
-            sparkle_download_and_save(
-                appcast_url: "https://protonvpn.com/download/macos-update3.xml"
-            )
+            sparkle_download_and_save()
             sparkle_append_item()
         end
     end
