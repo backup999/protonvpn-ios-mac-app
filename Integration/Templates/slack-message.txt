@@ -11,4 +11,8 @@ More release information is available <{{ config.build.ci.pagesUrl }}/{{ config.
 {% if config.distribution.sparkle %}
 Product URL: <{{
 config.distribution.sparkle.userProperties.internalDownloadUrl}}/repository/vpn-release-candidates/macos/{{ short_version }}+{%- include "timestamp" -%}/ProtonVPN_mac_v{{ short_version }}.dmg>
+{% if config.releaseChannel == "alpha" %}
+Product URL (Staging): <{{
+config.distribution.sparkle.userProperties.internalDownloadUrl}}/repository/vpn-release-candidates/macos/{{ short_version }}+{%- include "timestamp" -%}.staging/ProtonVPN_mac_v{{ short_version }}.dmg>
+{% endif %}
 {% endif %}
