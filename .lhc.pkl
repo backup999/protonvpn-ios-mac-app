@@ -76,7 +76,7 @@ local mac = (base) {
     distribution = new Sparkle {
         minimumSystemVersion = "12.0"
         phasedRolloutInterval = 86400
-        announceForum = "#test-adam" # TODO: Adapt this for alpha and rest
+        announceForum = "#test-adam" // TODO: Adapt this for alpha and rest
 
         userProperties = new Mapping {
 	    ["internalDownloadUrl"] = read?("env:CI_NEXUS_URL") ?? ""
