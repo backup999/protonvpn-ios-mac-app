@@ -55,6 +55,7 @@ local mac = (base) {
 
     trailers = (base.trailers) {
         releasePipeline = "Release-Pipeline-macOS"
+        failedPipeline = "Pipeline-Failure-macOS"
     }
 
     build = (base.build) {
@@ -91,6 +92,7 @@ local ios = (base) {
 
     trailers = (base.trailers) {
         releasePipeline = "Release-Pipeline-iOS"
+        failedPipeline = "Pipeline-Failure-iOS"
     }
 
     build = (base.build) {
@@ -124,6 +126,7 @@ local tv = (ios) {
 
     trailers = (base.trailers) {
         releasePipeline = "Release-Pipeline-tvOS"
+        failedPipeline = "Pipeline-Failure-tvOS"
     }
 
     build = (base.build) {
