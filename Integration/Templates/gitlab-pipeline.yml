@@ -119,8 +119,7 @@ include:
   cache: &mint_cache_cache
     - key: mint-$CI_COMMIT_REF_SLUG
       fallback_keys:
-        - mint-host-{{ config.userProperties.releaseBranch }}
-        - mint-host-$CI_DEFAULT_BRANCH
+        - mint-{{ config.userProperties.releaseBranch }}
       paths:
         - $MINT_CACHE_PATH
       policy: $MINT_CACHE_POLICY
