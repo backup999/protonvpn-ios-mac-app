@@ -64,17 +64,17 @@ include:
 
 {%- if config.distribution.sparkle -%}
 {%-
-    if config.build.ci.eventType == "merge_request_event" and
-    config.build.ci.refName == config.userProperties.releaseBranch
+    if (config.releaseChannel == "alpha" and config.build.ci.tagName) or
+       config.build.ci.refName == config.userProperties.releaseBranch
 -%}{# Include the Nexus release upload jobs #}
 {% for configuration in block.app_configurations|split:"," %}
   - component: "gitlab.protontech.ch/proton/devops/cicd-components/tools/artifactlift/release-candidate@0.1.20"
     inputs:
       stage: publish
       product: vpn
-      version: "{{ short_version }}+{% include "timestamp" %}"
+      version: "{{ short_version }}+{% include "timestamp" %}{% if configuration == "Staging" %}.staging{% endif %}"
       platform: macos
-      artifact_list: "ProtonVPN_mac_v{{ short_version }}.dmg sparkle.signature"
+      artifact_list: "ProtonVPN_mac_v{{ short_version }}.dmg {% if configuration != "Staging" %} sparkle.signature sparkle.xml {% endif %}"
       artifact_local_directory: output/mac/{{ configuration }}
       {% if configuration == "Staging" %}
       job_prefix: staging-
@@ -87,8 +87,8 @@ include:
       product: vpn
       version: "{{ release.versionString }}"
       platform: macos
-      artifact_list: "ProtonVPN_mac_v{{ short_version }}.dmg sparkle.signature"
-      artifact_metadata_list: "../public/$SPARKLE_XML_FILE"
+      artifact_list: "ProtonVPN_mac_v{{ short_version }}.dmg sparkle.signature sparkle.xml"
+      artifact_metadata_list: "sparkle.xml"
       artifact_metadata_path: "macos/updates/v4"
       artifact_local_directory: artifacts
 {% endif %}

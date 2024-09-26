@@ -23,13 +23,13 @@
 {% block publish_footer %}
 {% if config.distribution.sparkle %}
 {%
-    if (channel == "alpha" and config.build.ci.tagName) or
+    if (config.releaseChannel == "alpha" and config.build.ci.tagName) or
        config.build.ci.refName == config.userProperties.releaseBranch
 %}
 {# Modify each of the Nexus release upload jobs - notice the "for" #}
-{% for configuration in block.configurations|split:"," %}
+{% for configuration in config.build.userProperties.appConfigurations|split:"," %}
 {%- if configuration == "Staging" -%}{# Add prefix to the job #}
-  staging-
+staging-
 {%- endif -%}
 artifactlift-release-candidate-artifacts:
   variables:
@@ -51,7 +51,7 @@ artifactlift-release-candidate-artifacts:
 artifactlift-release-artifacts:
   needs: # Require the parent artifacts for the sparkle template
     - pipeline: $PARENT_PIPELINE_ID
-    - job: 'prepare'
+      job: 'prepare'
   variables:
     # We don't need to clone the repo, since this job operates on artifacts only.
     GIT_STRATEGY: none
@@ -69,6 +69,7 @@ artifactlift-release-artifacts:
     paths:
       # Pass this on to the pages step, which in turn passes it on to the -metadata job. This should instead be the normal fastlane publish job.
       - artifacts/sparkle.signature
+      - artifacts/sparkle.xml
 
 artifactlift-release-metadata:
   variables:
@@ -76,7 +77,7 @@ artifactlift-release-metadata:
     # Where to save the files locally (after cd'ing into $artifact_local_directory)
     AL_ROOT_DIRECTORY: .
   needs:
-    # For the sparkle update file
+    # For the sparkle files
     - job: pages
 {% endif %}
 {% endif %}

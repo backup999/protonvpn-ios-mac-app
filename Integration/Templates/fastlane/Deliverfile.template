@@ -1,9 +1,7 @@
 team_name "{{ config.build.teamName }}"
 team_id "{{ config.build.teamId }}"
 app_identifier "{{ config.build.appIdentifier }}"
-platform "{{ config.build.platform }}"
 force true
-submit_for_review true
 
 # This doesn't support API keys (and we have a team that does it anyway!)
 run_precheck_before_submit false
