@@ -25,6 +25,13 @@
 
 {% block announce_release_needs %}
 {{ block.super }}
+    {% for configuration in config.build.userProperties.appConfigurations|split:"," %}
+    - job: "build:{{ config.name }}:all"
+      parallel:
+        matrix:
+          - TARGET: app
+            CONFIGURATION: {{ configuration }}
+    {% endfor %}
     {% if config.distribution.sparkle %}
     {%
         if (channel == "alpha" and config.build.ci.tagName) or
