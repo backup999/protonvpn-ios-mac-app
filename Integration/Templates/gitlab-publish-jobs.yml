@@ -22,6 +22,12 @@
     - .job_template
 {% endblock %}
 
+{% block_publish_rules %}
+{% if config.build.platform == "iOS" and config.releaseChannel == "alpha" %}
+    - when: manual
+      allow_failure: true
+{% endblock %}
+
 {% block publish_footer %}
 {% if config.distribution.sparkle %}
 {%
