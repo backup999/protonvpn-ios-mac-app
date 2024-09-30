@@ -48,7 +48,7 @@ include:
     inputs:
       cleanup-stage: cleanup
       key: env-pipenv-$PARENT_PIPELINE_ID
-      expiration: "4h"
+      expiration: "2h"
       cleanup: manual
 
   - component: gitlab.protontech.ch/proton/devops/cicd-components/kubernetes/atlas-deploy/pipenv@0.7.0
@@ -59,7 +59,7 @@ include:
       images: $IMAGES
       key: custom-pipenv-$PARENT_PIPELINE_ID
       suffix: ":custom"
-      expiration: "4h"
+      expiration: "2h"
       cleanup: manual
 
 {%- if config.distribution.sparkle -%}
