@@ -24,7 +24,7 @@ variables:
   IMAGES: $IMAGES
 
 default:
-  image: "team-vpn-macos-14.4.1-xcode-15.4"
+  image: "team-vpn-macos-14.6.1-xcode-15.4"
 
 # Only start a pipeline if it's for a merge request, if the pipeline has been scheduled, if this is a merge result onto
 # the develop branch, or if this is a tag which begins with a recognized tag prefix like `mac` or `ios`.
