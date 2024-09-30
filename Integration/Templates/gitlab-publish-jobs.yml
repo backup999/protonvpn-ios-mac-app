@@ -22,10 +22,14 @@
     - .job_template
 {% endblock %}
 
-{% block_publish_rules %}
-{% if config.build.platform == "iOS" and config.releaseChannel == "alpha" %}
+{% block publish_rules %}
+{# iOS related constraints, in addition to those in main gitlab pipeline template #}
+{% if config.build.platform == "iOS" and
+      config.releaseChannel == "alpha" and
+      config.build.ci.eventType == "merge_request_event" %}
     - when: manual
       allow_failure: true
+{% endif %}
 {% endblock %}
 
 {% block publish_footer %}
