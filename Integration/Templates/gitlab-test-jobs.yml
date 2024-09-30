@@ -47,14 +47,6 @@
 
 {% block test_footer %}
 
-.ui_test_template:
-  extends:
-    - .test_job_template
-  stage: test_ui
-  needs:
-    - !reference [.test_job_template, needs]
-    - job: 'atlas:deploy:pipenv' # Make sure env gets deployed before starting UI tests
-
 # Unit tests run automatically on every job, provided the upstream pipelines (e.g. builds) are run.
 test:{{ config.name }}:unit:
   extends:
@@ -62,6 +54,19 @@ test:{{ config.name }}:unit:
   stage: test
   variables:
     TEST_SUITE: Unit-All
+
+# Modify the env deployment job so that it waits for the unit tests to finish first.
+atlas:deploy:pipenv:
+  needs:
+    - job: test:{{ config.name }}:unit
+
+.ui_test_template:
+  extends:
+    - .test_job_template
+  stage: test_ui
+  needs:
+    - !reference [.test_job_template, needs]
+    - job: 'atlas:deploy:pipenv' # Make sure env gets deployed before starting UI tests
 
 # Smoke UI tests run for all merge request events, including merged results.
 test:{{ config.name }}:ui:smoke:
