@@ -22,6 +22,10 @@ auto_release_date {{ release.trailers|get:config.trailers.automaticReleaseDate }
 {% endif %}
 {% endif %}
 
+{% if config.build.userProperties.languages %}
+languages("{{config.build.userProperties.languages}}".split(','))
+{% endif %}
+
 {% if release.body %}
 release_notes({
     "default" => <<~CHANGELOG

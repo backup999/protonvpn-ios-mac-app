@@ -108,6 +108,10 @@ local ios = (base) {
         match = new MatchSettings {
             branchName = "ios/vpn-ci"
         }
+
+        userProperties = (base.build.userProperties) {
+            ["languages"] = "en-US,ar,zh-TW,nl,en-GB,fr,fr-CA,de,id,it,ja,pl,pt-BR,ru,es-MX,es,uk"
+        }
     }
 
     distribution = new AppStore {
