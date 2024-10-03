@@ -22,8 +22,8 @@ auto_release_date {{ release.trailers|get:config.trailers.automaticReleaseDate }
 {% endif %}
 {% endif %}
 
-{% if config.build.userProperties.languages %}
-languages("{{config.build.userProperties.languages}}".split(','))
+{% if config.distribution.appStore.languages %}
+languages("{{config.distribution.appStore.languages}}".split(','))
 {% endif %}
 
 {% if release.body %}
