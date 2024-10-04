@@ -93,14 +93,24 @@ i18n-crowdin-upload:
   stage: i18n
   variables:
       I18N_SYNC_CROWDIN_PROJECT: 'apple-vpn'
-      I18N_EXTRACT_FROM_DIRECTORIES: 'libraries/Strings'
   extends: .i18n-sync-crowdin-shared-apple
 
 i18n-crowdin-download:
   stage: i18n
   variables:
       I18N_COMMIT_CROWDIN_PROJECT: 'apple-vpn'
-      I18N_EXTRACT_FROM_DIRECTORIES: 'libraries/Strings'
+  extends: .i18n-commit-locales-shared-apple
+
+i18n-tv-upload:
+  stage: i18n
+  variables:
+      I18N_SYNC_CROWDIN_PROJECT: 'apple-vpn-tv'
+  extends: .i18n-sync-crowdin-shared-apple
+
+i18n-tv-download:
+  stage: i18n
+  variables:
+      I18N_COMMIT_CROWDIN_PROJECT: 'apple-vpn-tv'
   extends: .i18n-commit-locales-shared-apple
 
 ##
