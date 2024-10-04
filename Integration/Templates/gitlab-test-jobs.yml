@@ -55,10 +55,22 @@ test:{{ config.name }}:unit:
   variables:
     TEST_SUITE: Unit-All
 
-# Modify the env deployment job so that it waits for the unit tests to finish first.
+# Modify the env deployment job so that it waits for the build to finish first.
 atlas:deploy:pipenv:
   needs:
-    - job: test:{{ config.name }}:unit
+    - job: build:{{ config.name }}:all
+      artifacts: false
+      parallel:
+        matrix:
+          - TARGET: tests
+            CONFIGURATION: Debug
+            DESTINATION: Default
+
+  {% if config.build.ci.eventType == "merge_request_event" and config.build.ci.refName == config.userProperties.releaseBranch %}
+  rules:
+    when: manual
+    allow_failure: true
+  {% endif %}
 
 .ui_test_template:
   extends:
