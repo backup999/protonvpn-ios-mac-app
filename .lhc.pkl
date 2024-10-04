@@ -115,6 +115,7 @@ local ios = (base) {
             if (base.releaseChannel == "alpha") "Internal Members" else
             if (base.releaseChannel == "beta") "Public Beta" else null
         announceForum = "#vpn-apple-builds"
+        languages = "en-US,ar,zh-TW,nl,en-GB,fr,fr-CA,de,id,it,ja,pl,pt-BR,ru,es-MX,es,uk"
     }
 }
 
