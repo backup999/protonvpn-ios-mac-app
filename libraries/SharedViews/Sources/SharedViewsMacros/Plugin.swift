@@ -1,7 +1,7 @@
 //
-//  Created on 2023-07-05.
+//  Created on 02/10/2024.
 //
-//  Copyright (c) 2023 Proton AG
+//  Copyright (c) 2024 Proton AG
 //
 //  ProtonVPN is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -16,23 +16,12 @@
 //  You should have received a copy of the GNU General Public License
 //  along with ProtonVPN.  If not, see <https://www.gnu.org/licenses/>.
 
-import Combine
+import SwiftCompilerPlugin
+import SwiftSyntaxMacros
 
-import Dependencies
-
-import Domain
-
-extension DependencyValues {
-    public var vpnConnectionStatus: @Sendable () async -> VPNConnectionStatus {
-        get { self[VPNConnectionStatusKey.self] }
-        set { self[VPNConnectionStatusKey.self] = newValue }
-    }
-}
-
-public enum VPNConnectionStatusKey: TestDependencyKey {
-    public static let testValue: @Sendable () async -> VPNConnectionStatus = { .disconnected }
-}
-
-public enum WatchAppStateChangesKey: TestDependencyKey {
-    public static let testValue: @Sendable () async -> AsyncStream<VPNConnectionStatus> = { .finished }
+@main
+struct CasePathsPlugin: CompilerPlugin {
+  let providingMacros: [Macro.Type] = [
+    PerceptibleGeometryReaderMacro.self
+  ]
 }
