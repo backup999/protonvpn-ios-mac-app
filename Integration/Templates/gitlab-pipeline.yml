@@ -44,6 +44,13 @@ default:
 
 include:
   - component: gitlab.protontech.ch/proton/devops/cicd-components/kubernetes/atlas-deploy/pipenv@0.7.0 {# Deploy jobs amended in test template #}
+
+  # DevSecOps:
+
+  - component: $CI_SERVER_FQDN/proton/devops/cicd-components/devsecops/grype/scan-code@0.0.18
+  - component: $CI_SERVER_FQDN/proton/devops/cicd-components/devsecops/gitleaks/scan-repository@0.0.19
+
+  - component: gitlab.protontech.ch/proton/devops/cicd-components/kubernetes/atlas-deploy/pipenv@0.7.0
     inputs:
       cleanup-stage: cleanup
       key: atlas-$CI_COMMIT_REF_SLUG
