@@ -23,9 +23,8 @@
 {% endblock %}
 
 {% block publish_rules %}
-{# iOS related constraints, in addition to those in main gitlab pipeline template #}
-{% if config.build.platform == "iOS" and
-      config.releaseChannel == "alpha" and
+{# Constraints in addition to those in main gitlab pipeline template (alpha tag or merged branch) #}
+{% if config.releaseChannel == "alpha" and
       config.build.ci.eventType == "merge_request_event" %}
     - when: manual
       allow_failure: true

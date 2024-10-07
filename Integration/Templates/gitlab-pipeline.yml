@@ -43,7 +43,7 @@ default:
   image: "team-vpn-$BUILD_HOST_IDENTIFIER"
 
 include:
-  
+
   - component: gitlab.protontech.ch/proton/devops/cicd-components/kubernetes/atlas-deploy/pipenv@0.7.0
     inputs:
       cleanup-stage: cleanup
@@ -131,12 +131,6 @@ include:
   cache:
     - *derived_data_cache_cache
     - *mint_cache_cache
-
-# cache policies
-# publish fastlane variables
-# publish sparkle job
-# metal executor & parallelism
-# xcode select
 
 # JOB TEMPLATE
 ##############
