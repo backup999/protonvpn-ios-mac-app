@@ -43,11 +43,10 @@ default:
   image: "team-vpn-$BUILD_HOST_IDENTIFIER"
 
 include:
-
-  - component: gitlab.protontech.ch/proton/devops/cicd-components/kubernetes/atlas-deploy/pipenv@0.7.0
+  - component: gitlab.protontech.ch/proton/devops/cicd-components/kubernetes/atlas-deploy/pipenv@0.7.0 {# Deploy jobs amended in test template #}
     inputs:
       cleanup-stage: cleanup
-      key: env-pipenv-$PARENT_PIPELINE_ID
+      key: atlas-$CI_COMMIT_REF_SLUG
       expiration: "2h"
       cleanup: manual
 
@@ -57,17 +56,23 @@ include:
       deploy: manual
       cleanup: manual
       images: $IMAGES
-      key: custom-pipenv-$PARENT_PIPELINE_ID
+      key: custom-env-atlas-$CI_COMMIT_REF_SLUG
       suffix: ":custom"
       expiration: "2h"
       cleanup: manual
+
+{%- if config.releaseChannel == "production" and config.build.ci.tagName -%}{# Jobs amended in publish template #}
+  - project: 'agarroux/publish-github'
+    ref: feat/github-app
+    file: '/jobs/release.gitlab-ci.yml'
+{%- endif -%}
 
 {%- if config.distribution.sparkle -%}
 {%-
     if (config.releaseChannel == "alpha" and config.build.ci.tagName) or
        config.build.ci.refName == config.userProperties.releaseBranch
 -%}{# Include the Nexus release upload jobs #}
-{% for configuration in block.app_configurations|split:"," %}
+{% for configuration in block.app_configurations|split:"," %}{# Jobs amended in publish template #}
   - component: "gitlab.protontech.ch/proton/devops/cicd-components/tools/artifactlift/release-candidate@0.1.20"
     inputs:
       stage: publish

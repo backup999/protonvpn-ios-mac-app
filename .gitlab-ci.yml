@@ -44,10 +44,6 @@ include:
     ref: master
     file: '/jobs/commit-locales.gitlab-ci.yml'
 
-  - project: 'agarroux/publish-github'
-    ref: feat/github-app
-    file: '/jobs/release.gitlab-ci.yml'
-
   # Generate a dynamic pipeline for each build train (platform) we support. This pipeline is based off of the template
   # at Integration/Templates/gitlab-pipeline.yml, and builds, tests, and publishes all necessary artifacts.
   #
@@ -126,7 +122,7 @@ prepare:
     GIT_DEPTH: 200
     GIT_SUBMODULE_STRATEGY: none
   stage: prepare
-  tags: 
+  tags:
     - vpn-apple-xs
   before_script:
     - !reference [.job_template, before_script]
@@ -147,35 +143,6 @@ prepare:
       - codequality_report.json
     reports:
       codequality: codequality_report.json
-
-##
-## ---- Uploading (production) tags to GitHub
-##
-
-        # github:mirror:commits:
-        #   extends: .release-sync-commit-shared
-        #   stage: github
-        #   interruptible: true
-        #   variables:
-        #     RELEASE_SYNC_TO_BRANCH: 'develop'
-        #     RELEASE_SYNC_FROM_BRANCH: 'develop'
-        #   # Run the job only if we have a tag ex:
-        #   #   - mac/1.1.1111111
-        #   #   - ios/1.1.1
-        #   only: &onlyTagsFilterOpenSource
-        #     refs:
-        #       - tags
-        #     variables:
-        #       - $CI_COMMIT_TAG =~ /^(mac|ios|tv)\/\d+\.\d+\.\d+$/
-        # 
-        # github:mirror:tag:
-        #   extends: .release-sync-tags-shared
-        #   stage: github
-        #   interruptible: true
-        #   variables:
-        #     RELEASE_SYNC_FROM_BRANCH: 'develop'
-        #   only:
-        #     <<: *onlyTagsFilterOpenSource
 
 ##
 ## ---- Trigger dynamic pipelines
@@ -215,7 +182,7 @@ trigger:tag:
     - if: $CI_COMMIT_TAG
       when: on_success
     - when: never
-      
+
 trigger:branch:
   extends:
     - .trigger_template
