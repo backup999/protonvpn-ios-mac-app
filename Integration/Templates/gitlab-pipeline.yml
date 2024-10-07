@@ -36,7 +36,7 @@ variables:
   BUILD_HOST_IDENTIFIER: "macos-{{ config.build.userProperties.platformVersion }}-xcode-{{ config.build.userProperties.toolchainVersion }}"
 {% if config.distribution.sparkle %}
   SPARKLE_XML_FILE: "sparkle.xml"
-  APPCAST_URL: "https://protonvpn.com/download/macos-update3.xml"
+  APPCAST_URL: "https://protonvpn.com/download/macos-update4.xml"
 {% endif %}
 
 default:
