@@ -1,5 +1,5 @@
 //
-//  Created on 19/9/24.
+//  Created on 4/10/24.
 //
 //  Copyright (c) 2024 Proton AG
 //
@@ -22,18 +22,28 @@ import XCTest
 extension UIElement {
     
     @discardableResult
-    public func tapInCenter(dx: Double = 0.5, dy: Double = 0.5) -> UIElement {
-        return tapOnCoordinate(withOffset: CGVector(dx: dx, dy: dy))
+    public func checkExists(message: @autoclosure () -> String, file: StaticString = #filePath, line: UInt = #line) -> UIElement {
+        XCTAssertTrue(
+            uiElement()!.exists,
+            message(),
+            file: file,
+            line: line
+        )
+        return self
     }
     
-    /// Forcibly hovers the element if its not hittable.
-    ///
-    /// - Parameters:
-    ///   - dx: The x-coordinate normalized offset. Default value is 0.5.
-    ///   - dy: The y-coordinate normalized offset. Default value is 0.5.
     @discardableResult
-    public func forceHover(dx: Double = 0.5, dy: Double = 0.5) -> UIElement {
-        uiElement()!.forceHover(dx: dx, dy: dy)
+    public func checkContainsValue(_ value: String, file: StaticString = #filePath, line: UInt = #line) -> UIElement {
+        guard let stringValue = uiElement()!.value as? String else {
+            XCTFail("Element doesn't have text value.")
+            return self
+        }
+        XCTAssertTrue(
+            stringValue.contains(value),
+            "Expected Element text value to contain: \"\(value)\", but found: \"\(stringValue)\"",
+            file: file,
+            line: line
+        )
         return self
     }
 }
