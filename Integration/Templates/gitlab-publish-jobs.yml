@@ -23,12 +23,10 @@
 {% endblock %}
 
 {% block publish_rules %}
-{# Constraints in addition to those in main gitlab pipeline template (alpha tag or merged branch) #}
-{% if config.releaseChannel == "alpha" and
-      config.build.ci.eventType == "merge_request_event" %}
+    - if: $CI_COMMIT_TAG
+      when: always
     - when: manual
       allow_failure: true
-{% endif %}
 {% endblock %}
 
 {% block publish_footer %}
@@ -92,4 +90,26 @@ artifactlift-release-metadata:
     - job: pages
 {% endif %}
 {% endif %}
+
+{% if config.releaseChannel == "production" and config.build.ci.tagName %}
+.release_mirror_template:
+  stage: publish
+  variables:
+    RELEASE_SYNC_TO_BRANCH: "{{ config.userProperties.releaseBranch }}"
+    RELEASE_SYNC_FROM_BRANCH: "{{ config.userProperties.releaseBranch }}"
+  only:
+    refs:
+      - tags
+
+publish:github:commits:
+  extends:
+    - .release-sync-commit-shared
+    - .release_mirror_template
+
+publish:github:tag:
+  extends:
+    - .release-sync-tags-shared
+    - .github_mirror_template
+{% endif %}
+
 {% endblock %}

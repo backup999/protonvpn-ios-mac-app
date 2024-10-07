@@ -11,6 +11,9 @@
     :dmg_output_name => "{{ config.build.productName }}_mac_v{{ short_version }}",
     # !end: ProtonVPN options
     {% endif -%}
+    {%- if config.releaseChannel == "beta" -%}
+    :sentry_upload => true,
+    {% endif -%}
 {% endblock %}
 
 {% block secrets %}
@@ -50,12 +53,11 @@
     $options[:sparkle_binary_path] = dmg_output_path
     $options[:appcast_url] = "https://protonvpn.com/download/macos-update4.xml"
     {%- endif %}
+
     # Listen to $MINT_LINK_PATH and include it in $PATH if it's not already there
     if (mint_path = ENV["MINT_LINK_PATH"]) and (path = ENV["PATH"]) and not path.include?(mint_path)
         ENV["PATH"] = "#{mint_path}:#{path}"
     end
-
-    puts "PATH: #{ENV['PATH']}"
     # !end: ProtonVPN initialize
 {% endblock %}
 
