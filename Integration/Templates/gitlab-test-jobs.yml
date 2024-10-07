@@ -55,8 +55,45 @@ test:{{ config.name }}:unit:
   variables:
     TEST_SUITE: Unit-All
 
-# Modify the env deployment job so that it waits for the build to finish first.
+# Modify the env deployment job:
+# - Depend on the success of the build job, and make sure it's successful.
+# - Make sure that deploy jobs in multiple child pipelines don't collide.
+# - Even after all of this, if it still fails, retry the job once.
 atlas:deploy:pipenv:
+  variables:
+      GIT_STRATEGY: fetch
+      GIT_DEPTH: 1
+      GIT_SUBMODULE_STRATEGY: none
+      # Lock namespace is per-branch to avoid contention across the project.
+      LOCKREF: "refs/notes/proton/envs/$CI_COMMIT_REF_SLUG"
+      # Trailer value is unique to this deploy job, to help identify us in the queue.
+      TRAILER: "Queued-Atlas-Deploy: $CI_JOB_ID"
+  retry:
+    max: 1
+    when:
+      - script_failure
+      - unknown_failure
+  before_script:
+    - |
+      git config --global --add safe.directory "$PWD"
+      rm .git/hooks/pre-push
+      git remote set-url origin https://oauth:$PIPELINE_ACCESS_TOKEN@${CI_PROJECT_URL:8}
+      git config --local user.email $GIT_CI_EMAIL
+      git config --local user.name $GIT_CI_USERNAME
+    - ./Integration/Scripts/deploy_lock.sh lock "$LOCKREF" "$TRAILER"
+  after_script:
+    - source deploy.env
+    - ./Integration/Scripts/deploy_lock.sh unlock "$LOCKREF" "$TRAILER"
+    - CI_JOB_STARTED_AT_TS=$(date -d "$CI_JOB_STARTED_AT" "+%s000")
+    - CI_JOB_ENDED_AT_TS=$(date "+%s000")
+    - GRAFANA_BASE_URL="https://grafana.$ATLAS_URL/d/pCwJa01Iz2/environments-overview-with-pods-failures-history"
+    - GRAFANA_URL="$GRAFANA_BASE_URL?orgId=1&var-environment=env-$ENV_NAME&from=$CI_JOB_STARTED_AT_TS&to=$CI_JOB_ENDED_AT_TS"
+    - echo -e "\e[35;1mYou can check your environment status and logs at:\n$GRAFANA_URL\e[0;m"
+    - |
+      echo '{"atlas-environment": [
+        {"external_link": {"label": "Open env '$ENV_NAME' (Login)", "url": "https://account.$ENV_NAME.$ATLAS_URL"}},
+        {"external_link": {"label": "Open env Dashboard (Grafana)", "url": "https://grafana.$ATLAS_URL/d/pCwJa01Iz2/environments-overview-with-pods-failures-history?orgId=1&vvar-environment=env-'$ENV_NAME'&from='$CI_JOB_STARTED_AT_TS'&to='$CI_JOB_ENDED_AT_TS'"}}
+      ]}' > annotations.json
   needs:
     - job: build:{{ config.name }}:all
       artifacts: false
@@ -66,11 +103,13 @@ atlas:deploy:pipenv:
             CONFIGURATION: Debug
             DESTINATION: Default
 
-  {% if config.build.ci.eventType == "merge_request_event" and config.build.ci.refName == config.userProperties.releaseBranch %}
   rules:
-    when: manual
-    allow_failure: true
-  {% endif %}
+{% if config.build.ci.eventType == "merge_request_event" %}
+    - when: on_success
+{% else %}
+    - when: manual
+      allow_failure: true
+{% endif %}
 
 .ui_test_template:
   extends:
