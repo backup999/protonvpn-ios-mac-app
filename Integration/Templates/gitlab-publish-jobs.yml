@@ -15,6 +15,21 @@
   - $PIPELINE_HOST
 {% endblock %}
 
+{% block publish_job_needs %}
+{{ block.super }}
+{%- if config.distribution.sparkle %}
+{% if channel == "alpha" %}
+    - job: '{% block build_job_name %}build:{{ config.name }}:all{% endblock %}'
+      parallel:
+        matrix:
+          - TARGET: app
+            CONFIGURATION: Release # We need the binary so that we can generate a signature
+{% else %}
+    - job: "artifactlift-release-artifacts"
+{% endif %}
+{% endif %}
+{% endblock %}
+
 {% block publish_app_configurations %}{{ config.build.userProperties.appConfigurations }}{% endblock %}
 
 {% block pages_header %}
@@ -24,9 +39,22 @@
 
 {% block publish_rules %}
     - if: $CI_COMMIT_TAG
-      when: always
+      when: on_success
     - when: manual
       allow_failure: true
+{% endblock %}
+
+{% block publish_artifacts %}
+{%- if config.distribution.sparkle -%}
+    paths:
+      {% if channel == "alpha" %}
+      # Publish creates the sparkle signature from the binary, which gets passed on to artifactlift-release-candidate-artifacts.
+      - {{ config.build.outputDirectory }}/Release/sparkle.signature
+      {% else %}
+      # Publish uses the signature from the alpha build and the publicly-available sparkle feed to generate a new sparkle xml file.
+      - {{ config.build.outputDirectory }}/Release/sparkle.xml
+      {% endif %}
+{% endif %}
 {% endblock %}
 
 {% block publish_footer %}
@@ -45,7 +73,7 @@ artifactlift-release-candidate-artifacts:
     GIT_STRATEGY: none
   rules: # Always run release uploads for tags, merges can be manual
     - if: $CI_COMMIT_TAG
-      when: always
+      when: on_success
     - when: manual
       allow_failure: true
   needs: # Make sure we get the artifacts from the build job.
@@ -54,6 +82,9 @@ artifactlift-release-candidate-artifacts:
         matrix:
           - TARGET: app
             CONFIGURATION: {{ configuration }}
+    {% if configuration == "Release" %}
+    - job: "publish:{{ config.name }}:app" # Publish job contains sparkle signature.
+    {% endif %}
 {% endfor %}
 {% elif config.build.ci.tagName and target|attrs:config.trailers.releasePipeline %}
 {# Modify the Nexus release promotion jobs #}
@@ -76,9 +107,8 @@ artifactlift-release-artifacts:
     url: "$CI_PAGES_URL/$CI_COMMIT_REF_SLUG/documentation/protonvpnrelease/"
   artifacts:
     paths:
-      # Pass this on to the pages step, which in turn passes it on to the -metadata job. This should instead be the normal fastlane publish job.
+      # Pass this on to the publish step, which in turn passes it on to the -metadata job.
       - artifacts/sparkle.signature
-      - artifacts/sparkle.xml
 
 artifactlift-release-metadata:
   variables:
@@ -87,7 +117,7 @@ artifactlift-release-metadata:
     AL_ROOT_DIRECTORY: .
   needs:
     # For the sparkle files
-    - job: pages
+    - job: publish:{{ config.name }}:app
 {% endif %}
 {% endif %}
 

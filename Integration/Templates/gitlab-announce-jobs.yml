@@ -25,7 +25,7 @@
 
 {% block announce_release_needs %}
 {{ block.super }}
-    {% if channel == "alpha" or config.build.ci.eventType == "merge_request_event" %}
+    {% if channel == "alpha" %}
     {% for configuration in config.build.userProperties.appConfigurations|split:"," %}
     - job: "build:{{ config.name }}:all"
       parallel:
@@ -34,7 +34,7 @@
             CONFIGURATION: {{ configuration }}
     {% endfor %}
     {% endif %}
-    {% if config.distribution.sparkle %}
+    {% if config.distribution.sparkle %}{# For macOS releases #}
     {%
         if (channel == "alpha" and config.build.ci.tagName) or
           config.build.ci.refName == config.userProperties.releaseBranch
@@ -52,9 +52,9 @@
 {% block announce_release_footer %}
   rules:
     - if: $CI_COMMIT_BRANCH == "{{ config.userProperties.releaseBranch }}"
-      when: always
+      when: on_success
     - if: $CI_COMMIT_TAG
-      when: always
+      when: on_success
     - when: manual
       allow_failure: true
 {% endblock %}

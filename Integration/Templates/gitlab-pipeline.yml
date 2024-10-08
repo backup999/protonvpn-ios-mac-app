@@ -34,10 +34,6 @@ variables:
   # Exportable configurations available for building the app
   APP_CONFIGURATIONS: {%+ block app_configurations %}{{ config.build.userProperties.appConfigurations }}{% endblock +%}
   BUILD_HOST_IDENTIFIER: "macos-{{ config.build.userProperties.platformVersion }}-xcode-{{ config.build.userProperties.toolchainVersion }}"
-{% if config.distribution.sparkle %}
-  SPARKLE_XML_FILE: "sparkle.xml"
-  APPCAST_URL: "https://protonvpn.com/download/macos-update4.xml"
-{% endif %}
 
 default:
   image: "team-vpn-$BUILD_HOST_IDENTIFIER"
@@ -83,7 +79,7 @@ include:
       product: vpn
       version: "{{ short_version }}+{% include "timestamp" %}{% if configuration == "Staging" %}.staging{% endif %}"
       platform: macos
-      artifact_list: "ProtonVPN_mac_v{{ short_version }}.dmg {% if configuration != "Staging" %} sparkle.signature sparkle.xml {% endif %}"
+      artifact_list: "ProtonVPN_mac_v{{ short_version }}.dmg {% if configuration != "Staging" %} sparkle.signature {% endif %}"
       artifact_local_directory: output/mac/{{ configuration }}
       {% if configuration == "Staging" %}
       job_prefix: staging-
@@ -96,8 +92,9 @@ include:
       product: vpn
       version: "{{ release.versionString }}"
       platform: macos
-      artifact_list: "ProtonVPN_mac_v{{ short_version }}.dmg sparkle.signature sparkle.xml"
-      artifact_metadata_list: "sparkle.xml"
+      artifact_list: "ProtonVPN_mac_v{{ short_version }}.dmg sparkle.signature"
+      # Retrieved from publish job, lives outside of the `artifacts` folder
+      artifact_metadata_list: "../{{ config.build.outputDirectory }}/Release/sparkle.xml"
       artifact_metadata_path: "macos/updates/v4"
       artifact_local_directory: artifacts
 {% endif %}
@@ -166,10 +163,7 @@ include:
 # PUBLISH STEP
 ##############
 # Sends app binaries to the correct place, according to the release channel.
-{%
-  if (channel == "alpha" and config.build.ci.tagName) or
-    config.build.ci.refName == config.userProperties.releaseBranch
-%}
+{% if config.build.ci.tagName or config.build.ci.refName == config.userProperties.releaseBranch %}
 {% include "gitlab-publish-jobs.yml" %}
 {% endif %}
 
