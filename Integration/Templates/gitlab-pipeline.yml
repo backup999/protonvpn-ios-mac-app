@@ -42,14 +42,13 @@ variables:
 default:
   image: "team-vpn-$BUILD_HOST_IDENTIFIER"
 
-include:
-  - component: gitlab.protontech.ch/proton/devops/cicd-components/kubernetes/atlas-deploy/pipenv@0.7.0 {# Deploy jobs amended in test template #}
 
+include:
   - component: gitlab.protontech.ch/proton/devops/cicd-components/kits/devsecops/generic@0.0.10
     inputs:
       allowed-to-fail: true # Make this 'false' once initial problems fixed.
 
-  - component: gitlab.protontech.ch/proton/devops/cicd-components/kubernetes/atlas-deploy/pipenv@0.7.0
+  - component: gitlab.protontech.ch/proton/devops/cicd-components/kubernetes/atlas-deploy/pipenv@0.7.0 {# Deploy jobs amended in test template #}
     inputs:
       cleanup-stage: cleanup
       key: atlas-$CI_COMMIT_REF_SLUG
