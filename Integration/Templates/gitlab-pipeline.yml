@@ -42,7 +42,6 @@ variables:
 default:
   image: "team-vpn-$BUILD_HOST_IDENTIFIER"
 
-
 include:
   - component: gitlab.protontech.ch/proton/devops/cicd-components/kits/devsecops/generic@0.0.10
     inputs:
