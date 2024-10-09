@@ -130,7 +130,7 @@ prepare:
   script:
     - |
       # Lint commits, code quality, and translations on branches only (not tags)
-      if [ -z "$CI_COMMIT_TAG" ]; then
+      if [ -z "$CI_COMMIT_TAG" ] && [ "$CI_MERGE_REQUEST_EVENT_TYPE" != "merge_train" ]; then
           mint run git-lhc lint --verbose --train ios # Lint commit history
           Integration/Scripts/code_quality.sh # Lint code quality
           Integration/Scripts/lint_translations.sh # Lint string files
