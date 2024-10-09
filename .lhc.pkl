@@ -77,10 +77,13 @@ local mac = (base) {
     distribution = new Sparkle {
         minimumSystemVersion = "12.0"
         phasedRolloutInterval = 86400
-        announceForum = "#vpn-apple-builds" // TODO: Adapt this for alpha and rest
+
+        announceForum =
+            if (base.releaseChannel == "alpha") read?("env:SLACK_BUILDS_URL") else
+            read?("env:SLACK_RELEASE_URL")
 
         userProperties = new Mapping {
-	    ["internalDownloadUrl"] = read?("env:CI_NEXUS_URL") ?? ""
+            ["internalDownloadUrl"] = read?("env:CI_NEXUS_URL") ?? ""
         }
     }
 }
@@ -114,7 +117,11 @@ local ios = (base) {
         testflightGroup =
             if (base.releaseChannel == "alpha") "App Store Connect Users" else
             if (base.releaseChannel == "beta") "Public Beta" else null
-        announceForum = "#vpn-apple-builds"
+
+        announceForum =
+            if (base.releaseChannel == "alpha") read?("env:SLACK_BUILDS_URL") else
+            read?("env:SLACK_RELEASE_URL")
+
         languages = "en-US,ar,zh-TW,nl,en-GB,fr,fr-CA,de,id,it,ja,pl,pt-BR,ru,es-MX,es,uk"
     }
 }
