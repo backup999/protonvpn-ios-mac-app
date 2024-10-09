@@ -1,5 +1,5 @@
 //
-//  Created on 22/8/24.
+//  Created on 18/9/24.
 //
 //  Copyright (c) 2024 Proton AG
 //
@@ -17,26 +17,13 @@
 //  along with ProtonVPN.  If not, see <https://www.gnu.org/licenses/>.
 
 import Foundation
+import ProtonCoreTestingToolkitPerformance
 
-enum UserType {
-    case Free
-    case Basic
-    case Plus
-    
-    var credentials: Credentials {
-        let allCredentials = getCredentials(fromResource: "credentials")
-        switch self {
-        case .Free:
-            return allCredentials[0]
-        case .Basic:
-            return allCredentials[1]
-        case .Plus:
-            return allCredentials[2]
-        }
-    }
-    
-    // Sample function to get credentials from a resource
-    func getCredentials(fromResource resource: String) -> [Credentials] {
-        return Credentials.loadFrom(plistUrl: Bundle(identifier: "ch.protonmail.vpn.ProtonVPNUITests")!.url(forResource: resource, withExtension: "plist")!)
+extension MeasurementConfig {
+
+    @discardableResult
+    public static func setProduct(_ product: String) -> MeasurementConfig.Type {
+        self.product = product
+        return self
     }
 }
