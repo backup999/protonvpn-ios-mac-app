@@ -1,5 +1,5 @@
 //
-//  Created on 22/05/2024.
+//  Created on 09/10/2024.
 //
 //  Copyright (c) 2024 Proton AG
 //
@@ -18,33 +18,12 @@
 
 import SwiftUI
 
-struct WelcomeButtonView: View {
-
-    let title: LocalizedStringKey
-    let action: () -> Void
-
-    @FocusState var focusState: Bool
-
+struct EULAView: View {
     var body: some View {
-        Button(action: action) {
-            Text(title)
-        }
-        .focused($focusState, equals: true)
-        .buttonStyle(TVButtonStyle())
-    }
-}
-
-struct InformationButtonView: View {
-    let title: LocalizedStringKey
-    let action: () -> Void
-
-    @FocusState var focusState: Bool
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-        }
-        .focused($focusState, equals: true)
-        .buttonStyle(TVButtonStyle())
+        ScrollableTextView(
+            text: Constants.Legal.eulaString,
+            linesPerChunk: 20
+        )
+        .padding()
     }
 }
