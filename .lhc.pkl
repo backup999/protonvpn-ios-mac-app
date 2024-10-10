@@ -146,6 +146,12 @@ local tv = (ios) {
         outputDirectory = "output/tv"
         testplansDirectory = "apps/tvos/TestPlans"
 
+        ci = if (read?("env:CI") == "true") new PipelineProperties {
+            userProperties = new Mapping {
+                ["pipelineHosts"] = "ci-vilnius-6" // vilnius-1 has an issue with TV builds for now
+            }
+        } else null
+
         match = new MatchSettings {
             branchName = "tvos/vpn-ci"
         }
