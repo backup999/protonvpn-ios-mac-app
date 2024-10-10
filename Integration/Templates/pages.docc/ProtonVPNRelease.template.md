@@ -1,4 +1,4 @@
-# ProtonVPN Release: {{ release.versionString }}
+# ProtonVPN Release: {{ release.versionString }} ({%- include "timestamp" -%})
 @Metadata {
     @TechnologyRoot
 }
