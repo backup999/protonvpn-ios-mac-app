@@ -25,6 +25,7 @@
 
 {% block announce_release_needs %}
 {{ block.super }}
+    {% if channel == "alpha" or config.build.ci.eventType == "merge_request_event" %}
     {% for configuration in config.build.userProperties.appConfigurations|split:"," %}
     - job: "build:{{ config.name }}:all"
       parallel:
@@ -32,6 +33,7 @@
           - TARGET: app
             CONFIGURATION: {{ configuration }}
     {% endfor %}
+    {% endif %}
     {% if config.distribution.sparkle %}
     {%
         if (channel == "alpha" and config.build.ci.tagName) or

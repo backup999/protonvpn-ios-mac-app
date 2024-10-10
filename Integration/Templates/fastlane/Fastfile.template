@@ -195,3 +195,41 @@
     # as of this writing and doesn't allow for shipit to run between the binary upload and the metadata upload pipeline
     # steps. See the artifactlift-release-metadata section of the gitlab pipeline template for more information.
 {% endblock %}
+
+{#
+ # Add to slack_args for richer URLs in the announcement messages (instead of including it in slack_message.txt)
+ #}
+{% block slack_args %}
+{{ block.super }}
+    payload: {
+        "audience" => "{{ config.releaseChannel }}"
+    },
+    attachment_properties: {
+        fields: [
+        {% if config.build.ci.tagName %}
+            {
+                title: "Release Page",
+                value: "<{{ config.build.ci.pagesUrl }}/{{ config.build.ci.refSlug }}/documentation/protonvpnrelease|{{ train }} {{ version }}>",
+                short: false
+            },
+        {% endif %}
+            {
+                title: "Pipeline",
+                value: "<{{ config.build.ci.pipelineUrl }}|{{ config.build.ci.pipelineId }}>",
+                short: false
+            },
+        {% if config.distribution.sparkle %}
+            {
+                title: "Build (Release)",
+                value: "<{{ config.distribution.sparkle.userProperties.internalDownloadUrl }}/repository/vpn-release-candidates/macos/{{ short_version }}+#{$timestamp}/ProtonVPN_mac_v{{ short_version }}.dmg|Download>",
+                short: false
+            },
+            {
+                title: "Build (Staging)",
+                value: "<{{ config.distribution.sparkle.userProperties.internalDownloadUrl }}/repository/vpn-release-candidates/macos/{{ short_version }}+#{$timestamp}.staging/ProtonVPN_mac_v{{ short_version }}.dmg|Download>",
+                short: false
+            },
+        {% endif %}
+        ]
+    },
+{% endblock %}
