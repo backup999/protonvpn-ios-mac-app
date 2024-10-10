@@ -43,6 +43,10 @@ default:
   image: "team-vpn-$BUILD_HOST_IDENTIFIER"
 
 include:
+  - component: gitlab.protontech.ch/proton/devops/cicd-components/kits/devsecops/generic@0.0.10
+    inputs:
+      allowed-to-fail: false
+
   - component: gitlab.protontech.ch/proton/devops/cicd-components/kubernetes/atlas-deploy/pipenv@0.7.0 {# Deploy jobs amended in test template #}
     inputs:
       cleanup-stage: cleanup
