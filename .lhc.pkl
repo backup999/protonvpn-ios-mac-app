@@ -14,7 +14,7 @@ local base = new Train {
     build = new BuildSettings {
         ci = if (read?("env:CI") == "true") new PipelineProperties {
             userProperties = new Mapping {
-                ["pipelineHosts"] = "ci-vilnius-1,ci-vilnius-6,ci-vilnius-6"
+                ["pipelineHosts"] = "ci-vilnius-1,ci-vilnius-6"
             }
         } else null
         productName = "ProtonVPN"
