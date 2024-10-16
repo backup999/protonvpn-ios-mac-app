@@ -34,6 +34,7 @@ variables:
   # Exportable configurations available for building the app
   APP_CONFIGURATIONS: {%+ block app_configurations %}{{ config.build.userProperties.appConfigurations }}{% endblock +%}
   BUILD_HOST_IDENTIFIER: "macos-{{ config.build.userProperties.platformVersion }}-xcode-{{ config.build.userProperties.toolchainVersion }}"
+  RELEASE_PAGE_URL: "$CI_PAGES_URL/$CI_COMMIT_REF_SLUG/documentation/protonvpnrelease/"
 
 default:
   image: "team-vpn-$BUILD_HOST_IDENTIFIER"
@@ -80,7 +81,7 @@ include:
       version: "{{ short_version }}+{% include "timestamp" %}{% if configuration == "Staging" %}.staging{% endif %}"
       platform: macos
       artifact_list: "ProtonVPN_mac_v{{ short_version }}.dmg {% if configuration != "Staging" %} sparkle.signature {% endif %}"
-      artifact_local_directory: output/mac/{{ configuration }}
+      artifact_local_directory: "{{ config.build.outputDirectory }}/{{ configuration }}"
       {% if configuration == "Staging" %}
       job_prefix: staging-
       {% endif %}

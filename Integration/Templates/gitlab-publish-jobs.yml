@@ -4,10 +4,12 @@
   extends:
     - .job_template
     - .mint_cache_template
+  {% if not config.distribution.sparkle %}{# Sparkle deploy environment is set in artifactlift jobs #}
   environment:
     # Certain environments, like beta and production, require approval for distribution.
     name: {{ config.releaseChannel }}
-    url: "$CI_PAGES_URL/$CI_COMMIT_REF_SLUG/documentation/protonvpnrelease/"
+    url: $RELEASE_PAGE_URL
+  {% endif %}
 {% endblock %}
 
 {% block publish_tags %}
@@ -15,7 +17,7 @@
   - $PIPELINE_HOST
 {% endblock %}
 
-{% block publish_job_needs %}
+{% block publish_needs %}
 {{ block.super }}
 {%- if config.distribution.sparkle %}
 {% if channel == "alpha" %}
@@ -71,6 +73,12 @@ staging-
 artifactlift-release-candidate-artifacts:
   variables:
     GIT_STRATEGY: none
+  {% if configuration == "Release" %}
+  environment:
+    # Certain environments, like beta and production, require approval for distribution.
+    name: {{ config.releaseChannel }}
+    url: $RELEASE_PAGE_URL
+  {% endif %}
   rules: # Always run release uploads for tags, merges can be manual
     - if: $CI_COMMIT_TAG
       when: on_success
@@ -104,7 +112,7 @@ artifactlift-release-artifacts:
   environment:
     # Certain environments, like beta and production, require approval for distribution.
     name: {{ config.releaseChannel }}
-    url: "$CI_PAGES_URL/$CI_COMMIT_REF_SLUG/documentation/protonvpnrelease/"
+    url: $RELEASE_PAGE_URL
   artifacts:
     paths:
       # Pass this on to the publish step, which in turn passes it on to the -metadata job.
@@ -121,7 +129,36 @@ artifactlift-release-metadata:
 {% endif %}
 {% endif %}
 
-{% if config.releaseChannel == "production" and config.build.ci.tagName %}
+{% if config.build.ci.tagName %}{# Only available for tag pushes #}
+publish:gitlab:release:
+  stage: publish
+  tags:
+    - shared-small
+  allow_failure: true
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  script: echo "Creating release $CI_COMMIT_TAG"
+  needs:
+    # In case the environment deploy requires approval
+    - job: publish:{{ config.name }}:app
+  release:
+    name: "{{ train }} {{ version }} ($TIMESTAMP)"
+    tag_name: $CI_COMMIT_TAG
+    {% if release.body %}
+    description: |
+      {{ release.body|indent:6 }}
+    {% endif %}
+    assets:
+      links:
+        - name: "Release Page"
+          url: $RELEASE_PAGE_URL
+        {% if config.distribution.sparkle %}
+        - name: "Release Build"
+          url: "{{ config.distribution.sparkle.userProperties.internalDownloadUrl }}/repository/vpn-release-candidates/macos/{{ short_version }}+$TIMESTAMP/ProtonVPN_mac_v{{ short_version }}.dmg"
+        - name: "Staging Build"
+          url: "{{ config.distribution.sparkle.userProperties.internalDownloadUrl }}/repository/vpn-release-candidates/macos/{{ short_version }}+$TIMESTAMP.staging/ProtonVPN_mac_v{{ short_version }}.dmg"
+        {% endif %}
+
+{% if config.releaseChannel == "production" %}
 .release_mirror_template:
   stage: publish
   variables:
@@ -140,6 +177,7 @@ publish:github:tag:
   extends:
     - .release-sync-tags-shared
     - .github_mirror_template
+{% endif %}
 {% endif %}
 
 {% endblock %}
