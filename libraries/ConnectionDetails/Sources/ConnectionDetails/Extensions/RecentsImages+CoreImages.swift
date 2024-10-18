@@ -1,5 +1,5 @@
 //
-//  Created on 19/06/2024.
+//  Created on 14/10/2024.
 //
 //  Copyright (c) 2024 Proton AG
 //
@@ -16,24 +16,16 @@
 //  You should have received a copy of the GNU General Public License
 //  along with ProtonVPN.  If not, see <https://www.gnu.org/licenses/>.
 
-import ComposableArchitecture
 import Foundation
-import Domain
+import ProtonCoreUIFoundations
+import SharedViews
 
-public extension PersistenceReaderKey where Self == AppStorageKey<String?> {
-    static var userCountry: Self {
-        appStorage("userCountry")
-    }
-}
-
-public extension PersistenceReaderKey where Self == AppStorageKey<String?> {
-    static var userIP: Self {
-        appStorage("userIP")
-    }
-}
-
-public extension PersistenceReaderKey where Self == PersistenceKeyDefault<AppStorageKey<Int>> {
-    static var userTier: Self {
-        PersistenceKeyDefault(.appStorage("userTier"), 0)
+public extension RecentsImages {
+    static var coreImages: Self {
+        .init(wrenchImage: IconProvider.wrench,
+              threeDotsHorizontalImage: IconProvider.threeDotsHorizontal,
+              pinFilled: IconProvider.pinFilled,
+              pinSlashFilled: IconProvider.pinSlashFilled,
+              trashCrossFilled: IconProvider.trashCrossFilled)
     }
 }
