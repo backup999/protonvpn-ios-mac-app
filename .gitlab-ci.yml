@@ -136,6 +136,10 @@ prepare:
           Integration/Scripts/lint_translations.sh # Lint string files
       fi
     - !reference [.lhc_describe, script] # Generate child pipelines
+  rules:
+    - if: $CI_MERGE_REQUEST_TITLE =~ /^Draft:/ # Don't run pipelines automatically for draft MRs
+      when: manual
+    - when: always
   artifacts:
     expire_in: 5 days
     paths:

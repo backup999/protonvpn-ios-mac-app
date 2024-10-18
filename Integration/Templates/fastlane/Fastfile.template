@@ -9,11 +9,20 @@
     {% if config.distribution.sparkle -%}
     # !begin: ProtonVPN options
     :dmg_output_name => "{{ config.build.productName }}_mac_v{{ short_version }}",
-    # !end: ProtonVPN options
+    :sparkle_download_headers => {
+        "test-s3" => "foobar"
+    },
+    :sparkle_signature_path => "artifacts/sparkle.signature",
+    {% if config.build.ci.tagName %}
+    :sparkle_item_file => "#{ENV.fetch('DESCRIBE_DIR', $repo_path)}/release/sparkle-item.xml",
+    {% else %}
+    :sparkle_item_file => "#{ENV.fetch('DESCRIBE_DIR', $repo_path)}/{{ config.name }}/sparkle-item.xml",
+    {% endif %}
     {% endif -%}
     {%- if config.releaseChannel == "beta" -%}
     :sentry_upload => true,
     {% endif -%}
+    # !end: ProtonVPN options
 {% endblock %}
 
 {% block secrets %}
@@ -115,24 +124,6 @@
     # !end: ProtonVPN prebuild
 {% endblock %}
 
-{% block postbuild %}
-{{ block.super }}
-    {% if config.distribution.sparkle %}
-    if $options[:configuration] == "Release"
-        # Sparkle signature goes here instead of in shipit step - signature is uploaded as part of binary promotion
-        # Note: this should happen after notarization, since stapling the ticket to the dmg alters it (and thus the hash)
-        if (describe_dir = $options[:describe_directory])
-            $options[:sparkle_item_file] = "#{describe_dir}/sparkle-item.xml"
-        end
-        if (sparkle_item_file = $options[:sparkle_item_file])
-            sparkle_sign_update()
-            sparkle_download_and_save()
-            sparkle_append_item()
-        end
-    end
-    {% endif %}
-{% endblock %}
-
 ##
 ## ---- Test Setup (including test builds)
 ##
@@ -185,25 +176,12 @@
 {{ block.super }}
 {% endblock %}
 
-##
-## ---- Shipping setup
-##
-
-{% block sparkle %}
-    # Instead of doing sparkle during the shipit step, we generate the signature during the buildit step for
-    # more straightforward binary promotion. The artifactlift code provided by the devops team is tightly coupled
-    # as of this writing and doesn't allow for shipit to run between the binary upload and the metadata upload pipeline
-    # steps. See the artifactlift-release-metadata section of the gitlab pipeline template for more information.
-{% endblock %}
-
 {#
  # Add to slack_args for richer URLs in the announcement messages (instead of including it in slack_message.txt)
  #}
 {% block slack_args %}
 {{ block.super }}
-    payload: {
-        "audience" => "{{ config.releaseChannel }}"
-    },
+    default_payloads: [:git_author, :last_git_commit, :last_git_commit_hash],
     attachment_properties: {
         fields: [
         {% if config.build.ci.tagName %}
@@ -232,4 +210,15 @@
         {% endif %}
         ]
     },
+{% endblock %}
+
+{% block sparkle %}
+    if $options[:configuration] == "Release"
+{% if channel == "alpha" %}
+    sparkle_sign_update()
+{% else %}
+    sparkle_download_and_save()
+    sparkle_append_item()
+{% endif %}
+    end
 {% endblock %}
