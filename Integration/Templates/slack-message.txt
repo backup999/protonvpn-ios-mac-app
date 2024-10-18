@@ -1,4 +1,4 @@
-:apple-computer-inc: {{ config.build.platform }} `{{ version }} ({%- include "timestamp" -%})` is now available for {{ channel }} use.
+:apple-computer-inc: {{ config.build.platform }} `{{ version }} ({%- include "timestamp.base" -%})` is now available for {{ channel }} use.
 
 {% if release.body %}
 ```
