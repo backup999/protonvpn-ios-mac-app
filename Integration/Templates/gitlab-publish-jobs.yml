@@ -136,7 +136,33 @@ publish:gitlab:release:
     - shared-small
   allow_failure: true
   image: registry.gitlab.com/gitlab-org/release-cli:latest
-  script: echo "Creating release $CI_COMMIT_TAG"
+  script: |
+  {% if channel == "production" %}
+    echo "Creating release {{ train }} {{ short_version }}..."
+  {% else %}
+    # Update the release contents in Jira using webhook automations.
+    # PROJECT_IDS is a bunch of task IDs separated by one (or more) spaces.
+    PROJECT_IDS='
+        {%- for category, changes in release.changes -%}
+            {%- for change in changes -%}{{ change.projectIds|join:" " }} {%+ endfor -%}
+        {%- endfor -%}
+    '
+
+    # Clean up the above array using `sed` by replacing one or more spaces with commas, and trimming the comma at
+    # the beginning/end, if it exists. (This is difficult to do with templates alone, since you don't know what the last
+    # element is in the list that contains a non-empty projectIds array.)
+    JSON_PROJECT_IDS=$(echo "$PROJECT_IDS" | sed 's/  */,/g' | sed 's/,$//' | sed 's/^,//')
+
+    echo "Updating tasks in Jira..."
+    curl -X POST -H 'Content-type: application/json' \
+        --data "{\"releaseName\":\"{{ train }} {{ short_version }}\",\"issues\":[$JSON_PROJECT_IDS]}" \
+    {% if channel == "alpha" %}
+        "$JIRA_NEW_RELEASE_WEBHOOK" \
+    {% elif channel == "beta" %}
+        "$JIRA_SHIP_RELEASE_WEBHOOK" \
+    {% endif %}
+        || true # Allow failure if it doesn't succeed, people can update tasks manually.
+  {% endif %}
   needs:
     # In case the environment deploy requires approval
     - job: publish:{{ config.name }}:app
