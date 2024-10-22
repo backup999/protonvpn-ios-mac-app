@@ -136,10 +136,12 @@
             contents = File.read(path)
 
             if (atlas_secret = $secrets[:atlas_secret])
+                puts "Pretest: substituting atlas secret..."
                 contents.gsub("ATLAS_SECRET_PLACEHOLDER", "ATLAS_SECRET=#{atlas_secret}")
             end
 
             if (dynamic_domain = $secrets[:dynamic_domain])
+                puts "Pretest: substituting dynamic domain #{dynamic_domain}..."
                 contents.gsub("DYNAMIC_DOMAIN_PLACEHOLDER", "DYNAMIC_DOMAIN=#{dynamic_domain}")
             end
 
