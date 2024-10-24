@@ -1,10 +1,7 @@
 //
-//  AlertService.swift
-//  ProtonVPN - Created on 01.07.19.
+//  Created on 23/10/2024.
 //
-//  Copyright (c) 2019 Proton Technologies AG
-//
-//  This file is part of ProtonVPN.
+//  Copyright (c) 2024 Proton AG
 //
 //  ProtonVPN is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -18,15 +15,20 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with ProtonVPN.  If not, see <https://www.gnu.org/licenses/>.
-//
 
-import Foundation
-import LegacyCommon
-import VPNAppCore
+import Dependencies
 
-@testable import ProtonVPN
+extension DependencyValues {
+    public var pushAlert: @Sendable (SystemAlert) -> Void {
+        get { self[PushAlertKey.self] }
+        set { self[PushAlertKey.self] = newValue }
+    }
+}
 
-class AlertServiceEmptyStub: AlertService {
-    
-    func push(alert: SystemAlert) {}
+public enum PushAlertKey { }
+
+extension PushAlertKey: TestDependencyKey {
+    public static let testValue: @Sendable (SystemAlert) -> Void = { alert in
+
+    }
 }

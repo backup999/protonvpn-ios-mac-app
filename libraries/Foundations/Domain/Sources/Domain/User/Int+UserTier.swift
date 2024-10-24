@@ -1,10 +1,7 @@
 //
-//  AlertService.swift
-//  ProtonVPN - Created on 01.07.19.
+//  Created on 23/10/2024.
 //
-//  Copyright (c) 2019 Proton Technologies AG
-//
-//  This file is part of ProtonVPN.
+//  Copyright (c) 2024 Proton AG
 //
 //  ProtonVPN is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -18,15 +15,22 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with ProtonVPN.  If not, see <https://www.gnu.org/licenses/>.
-//
 
-import Foundation
-import LegacyCommon
-import VPNAppCore
+public extension Int {
+    var isPaidTier: Bool {
+        !isFreeTier
+    }
+    var isFreeTier: Bool {
+        self == Int.freeTier
+    }
+    static var freeTier: Int = .freeTier
+    static var paidTier: Int = VpnTiers.plus
+    static var internalTier: Int = VpnTiers.internal // Dev-only
 
-@testable import ProtonVPN
-
-class AlertServiceEmptyStub: AlertService {
-    
-    func push(alert: SystemAlert) {}
+    fileprivate struct VpnTiers {
+        static let free = 0
+        // 1 was historically used for basic plans, which no longer exist
+        static let plus = 2 // also visionary
+        static let `internal` = 3
+    }
 }
