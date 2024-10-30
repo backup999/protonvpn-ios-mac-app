@@ -1,0 +1,9 @@
+{% for category, changes in release.changes -%}
+{%- for change in changes -%}
+{%- if change.projectIds.count > 0 -%}
+{%- for projectId in change.projectIds -%}
+{{ change.commitHash }} {{ projectId }}
+{% endfor %}
+{%- endif -%}
+{%- endfor -%}
+{%- endfor -%}
