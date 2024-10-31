@@ -1,7 +1,7 @@
 //
-//  Created on 2022-02-03.
+//  Created on 31.10.2024.
 //
-//  Copyright (c) 2022 Proton AG
+//  Copyright (c) 2024 Proton AG
 //
 //  ProtonVPN is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -18,20 +18,20 @@
 
 import Foundation
 
-public protocol UpdateCheckerFactory {
-    func makeUpdateChecker() -> UpdateChecker
-}
-
-/// Check if updates for current app is available. Implemented on each platform depending on the way the app is distributed.
-public protocol UpdateChecker {
-
-    /// Check if current app can be updated.
-    func isUpdateAvailable() async -> Bool
+#if DEBUG
+public struct UpdateCheckerMock: UpdateChecker {
+    public func startUpdate() {
+    }
+    
+    public func isUpdateAvailable() async -> Bool {
+        return false
+    }
 
     /// Check if the latest app supports the current running OS version.
-    func minimumVersionRequiredByNextUpdate() async -> OperatingSystemVersion
+    public func minimumVersionRequiredByNextUpdate() async -> OperatingSystemVersion {
+        return ProcessInfo.processInfo.operatingSystemVersion
+    }
 
-    /// Start updating app.
-    func startUpdate()
-    
+    public init() {}
 }
+#endif
