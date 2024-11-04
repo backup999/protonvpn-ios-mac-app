@@ -33,6 +33,9 @@
           - TARGET: app
             CONFIGURATION: {{ configuration }}
     {% endfor %}
+    {% if config.build.ci.tagName or config.build.ci.refName == config.userProperties.releaseBranch %}
+    - job: "publish:{{ config.name }}:app"
+    {% endif %}
     {% endif %}
     {% if config.distribution.sparkle %}{# For macOS releases #}
     {%
