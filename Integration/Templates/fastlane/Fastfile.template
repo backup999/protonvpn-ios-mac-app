@@ -13,6 +13,9 @@
         "test-s3" => "foobar"
     },
     :sparkle_signature_path => "artifacts/sparkle.signature",
+    {% if config.build.userProperties.simulatorRuntime %}
+    :simulator_runtime_filter => {{ config.build.userProperties.simulatorRuntime }},
+    {% endif %}
     {% if config.build.ci.tagName %}
     :sparkle_item_file => "#{ENV.fetch('DESCRIBE_DIR', $repo_path)}/release/sparkle-item.xml",
     {% else %}
