@@ -153,6 +153,10 @@ local ios = (base) {
         match = new MatchSettings {
             branchName = "ios/vpn-ci"
         }
+
+        userProperties = (base.build.userProperties) {
+            ["simulatorRuntime"] = "iOS 17.5"
+        }
     }
 
     distribution = new AppStore {
@@ -213,6 +217,7 @@ local tv = (ios) {
 
         userProperties = (base.build.userProperties) {
             ["appConfigurations"] = "Release"
+            ["simulatorRuntime"] = "tvOS 17.5"
         }
     }
 }
