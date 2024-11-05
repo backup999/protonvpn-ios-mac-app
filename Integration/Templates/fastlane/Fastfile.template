@@ -186,7 +186,7 @@
  #}
 {% block slack_args %}
 {{ block.super }}
-    default_payloads: [:git_author, :last_git_commit, :last_git_commit_hash],
+    default_payloads: [:last_git_commit_hash],
     attachment_properties: {
         fields: [
         {% if config.build.ci.tagName %}
