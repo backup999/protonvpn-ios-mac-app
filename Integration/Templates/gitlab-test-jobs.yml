@@ -83,6 +83,8 @@ atlas:deploy:pipenv:
     - ./Integration/Scripts/deploy_lock.sh lock "$LOCKREF" "$TRAILER"
   after_script:
     - ./Integration/Scripts/deploy_lock.sh unlock "$LOCKREF" "$TRAILER"
+    # Add the atlas secret to the dotenv file
+    - echo "ATLAS_SECRET=$(curl -q "$ATLAS_TOKEN_URL")" >> deploy.env
     - source deploy.env
     - CI_JOB_STARTED_AT_TS=$(date -d "$CI_JOB_STARTED_AT" "+%s000")
     - CI_JOB_ENDED_AT_TS=$(date "+%s000")
