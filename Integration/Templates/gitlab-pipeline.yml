@@ -120,7 +120,7 @@ include:
 
 .mint_cache_template:
   variables: &mint_cache_variables
-    MINT_PATH: $CI_PROJECT_DIR/.caches/mint
+    MINT_PATH: .caches/mint
     MINT_LINK_PATH: $MINT_PATH/bin
     MINT_CACHE_POLICY: pull-push
   cache: &mint_cache_cache
@@ -128,7 +128,7 @@ include:
       fallback_keys:
         - mint-{{ config.userProperties.releaseBranch }}
       paths:
-        - $MINT_CACHE_PATH
+        - $MINT_PATH
       policy: $MINT_CACHE_POLICY
 
 .build_cache_template:
