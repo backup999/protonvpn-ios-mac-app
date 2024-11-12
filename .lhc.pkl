@@ -1,5 +1,27 @@
 extends "lhc:///Trains.pkl"
 
+local macOSScopes = new Listing {
+    "mac"
+    "macos"
+    "sparkle"
+    "macosextension"
+    "systemextensions"
+    "sysext"
+}
+
+local iOSScopes = new Listing {
+    "ios"
+    "iosextension"
+    "iosredesign"
+    "ioshome"
+}
+
+local tvOSScopes = new Listing {
+    "tvos"
+    "tvextension"
+    "tvosextension"
+}
+
 // The base configuration which the other trains inherit from.
 local base = new Train {
     templatesDirectory = "Integration/Templates"
@@ -75,12 +97,8 @@ local mac = (base) {
     linter = (base.linter) {
         commitScopes = (base.linter.commitScopes) {
             items = (base.linter.commitScopes.items) {
-                "ios"
-                "iosextension"
-                "tv"
-                "tvos"
-                "tvextension"
-                "tvosextension"
+                ...iOSScopes
+                ...tvOSScopes
             }
         }
     }
@@ -128,14 +146,8 @@ local ios = (base) {
     linter = (base.linter) {
         commitScopes = (base.linter.commitScopes) {
             items = (base.linter.commitScopes.items) {
-                "mac"
-                "macos"
-                "sparkle"
-                "macosextension"
-                "tv"
-                "tvos"
-                "tvextension"
-                "tvosextension"
+                ...macOSScopes
+                ...tvOSScopes
             }
         }
     }
@@ -186,12 +198,8 @@ local tv = (ios) {
     linter = (base.linter) {
         commitScopes = (base.linter.commitScopes) {
             items = (base.linter.commitScopes.items) {
-                "mac"
-                "macos"
-                "sparkle"
-                "macosextension"
-                "ios"
-                "iosextension"
+                ...macOSScopes
+                ...iOSScopes
             }
         }
     }
