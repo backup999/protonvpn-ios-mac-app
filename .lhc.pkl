@@ -36,7 +36,8 @@ local base = new Train {
     build = new BuildSettings {
         ci = if (read?("env:CI") == "true") new PipelineProperties {
             userProperties = new Mapping {
-                ["pipelineHosts"] = "ci-vilnius-1,ci-vilnius-6"
+                // ci-vilnius-1 is just a poor wittle M1 machine. Beefy vilnius-6 can handle more
+                ["pipelineHosts"] = "ci-vilnius-1,ci-vilnius-6,ci-vilnius-6"
             }
         } else null
         productName = "ProtonVPN"
