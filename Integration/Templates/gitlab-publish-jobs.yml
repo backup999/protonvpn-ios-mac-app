@@ -176,7 +176,7 @@ publish:github:commits:
 publish:github:tag:
   extends:
     - .release-sync-tags-shared
-    - .github_mirror_template
+    - .release_mirror_template
 {% endif %}
 {% endif %}
 
