@@ -80,6 +80,21 @@ local base = new Train {
         }
     }
 
+    changelogTypeDisplayNames = new Mapping {
+        ["merge"] = "Merged Branch"
+        ["revert"] = "Reverted Commit"
+        ["fix"] = "Fix"
+        ["feat"] = "Feature"
+        ["test"] = "Test"
+        ["refactor"] = "Refactor"
+        ["build"] = "Build"
+        ["ci"] = "CI/CD"
+        ["doc"] = "Documentation"
+        ["chore"] = "Chore"
+        ["i18n"] = "Localization/Internationalization"
+        ["release"] = "Release"
+    }
+
     userProperties = new Mapping {
         ["releaseBranch"] = "develop"
     }
