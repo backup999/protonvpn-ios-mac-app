@@ -1,5 +1,5 @@
 //
-//  Created on 26/08/2024.
+//  Created on 19/11/2024.
 //
 //  Copyright (c) 2024 Proton AG
 //
@@ -16,29 +16,12 @@
 //  You should have received a copy of the GNU General Public License
 //  along with ProtonVPN.  If not, see <https://www.gnu.org/licenses/>.
 
-import SwiftUI
-import Strings
-import VPNAppCore
-import Dependencies
+import OrderedCollections
 import ComposableArchitecture
+import Domain
 
-struct HomeConnectionCardTitleView: View {
-
-    let store: StoreOf<HomeConnectionCardTitleFeature>
-
-    public var body: some View {
-        HStack {
-            Text(store.title)
-                .themeFont(.body3(emphasised: false))
-                .foregroundColor(Color(.text))
-            Spacer()
-//            Text(Localizable.actionHelp)
-//                .themeFont(.caption(emphasised: true))
-//                .styled(.weak)
-//            IconProvider.questionCircle
-//                .resizable()
-//                .styled(.weak)
-//                .frame(.square(16)) // TODO: [redesign, phase 2]
-        }
+public extension PersistenceReaderKey where Self == PersistenceKeyDefault<InMemoryKey<OrderedSet<RecentConnection>>> {
+    static var recents: Self {
+        PersistenceKeyDefault(.inMemory("recents"), [])
     }
 }
