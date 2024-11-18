@@ -36,10 +36,10 @@ local base = new Train {
     build = new BuildSettings {
         ci = if (read?("env:CI") == "true") new PipelineProperties {
             userProperties = new Mapping {
-                // ci-vilnius-1 is just a poor wittle M1 machine. Beefy vilnius-6 can handle more
-                ["pipelineHosts"] = "ci-vilnius-1,ci-vilnius-6,ci-vilnius-6"
+                ["pipelineHosts"] = "ci-vilnius-6" // for now, vilnius-1 is only used for macOS builds/tests.
             }
         } else null
+
         productName = "ProtonVPN"
         userProperties = new Mapping {
             ["platformVersion"] = "14.6.1"
@@ -129,6 +129,12 @@ local mac = (base) {
         outputDirectory = "output/mac"
         testplansDirectory = "apps/macos/TestPlans"
         dmgConfigPath = "Integration/Scripts/dmg_config.py"
+
+        ci = if (read?("env:CI") == "true") new PipelineProperties {
+            userProperties = new Mapping {
+                ["pipelineHosts"] = "ci-vilnius-1,ci-vilnius-6"
+            }
+        } else null
 
         match = new MatchSettings {
             branchName = "macos/vpn-ci"
@@ -228,12 +234,6 @@ local tv = (ios) {
         appIdentifier = "ch.protonmail.vpn"
         outputDirectory = "output/tv"
         testplansDirectory = "apps/tvos/TestPlans"
-
-        ci = if (read?("env:CI") == "true") new PipelineProperties {
-            userProperties = new Mapping {
-                ["pipelineHosts"] = "ci-vilnius-6" // vilnius-1 has an issue with TV builds for now
-            }
-        } else null
 
         match = new MatchSettings {
             branchName = "tvos/vpn-ci"
