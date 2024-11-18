@@ -106,7 +106,7 @@ atlas:deploy:pipenv:
             DESTINATION: Default
 
   rules:
-{% if config.build.ci.eventType == "merge_request_event" %}
+{% if config.build.ci.eventType == "merge_request_event" or config.build.ci.eventType == "schedule" %}
     - when: on_success
 {% else %}
     - when: manual
@@ -143,7 +143,9 @@ test:{{ config.name }}:ui:all:
     TEST_SUITE: UI-All
   extends:
     - .ui_test_template
-  {% if config.build.ci.eventType != "schedule" %}
+  {% if config.build.ci.eventType == "schedule" %}
+  when: on_success
+  {% else %}
   when: manual
   {% endif %}
 

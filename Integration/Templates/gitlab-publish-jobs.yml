@@ -143,6 +143,13 @@ publish:gitlab:release:
   release:
     name: "{{ train }} {{ version }} ($TIMESTAMP)"
     tag_name: $CI_COMMIT_TAG
+    {% for commit in target|commits -%}
+    {% if commit|attrs:"Sprint-Started" %}
+    milestones:
+      - "{{ commit|attrs:"Sprint-Started" }}"
+    {% break %}
+    {% endif %}
+    {% endfor %}
     {% if release.body %}
     description: |
       {{ release.body|indent:6 }}
