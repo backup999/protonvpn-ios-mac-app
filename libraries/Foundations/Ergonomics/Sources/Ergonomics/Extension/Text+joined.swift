@@ -1,7 +1,7 @@
 //
-//  Created on 2023-06-20.
+//  Created on 15/11/2024.
 //
-//  Copyright (c) 2023 Proton AG
+//  Copyright (c) 2024 Proton AG
 //
 //  ProtonVPN is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -16,19 +16,11 @@
 //  You should have received a copy of the GNU General Public License
 //  along with ProtonVPN.  If not, see <https://www.gnu.org/licenses/>.
 
-import Foundation
-import Dependencies
+import SwiftUI
 
-extension DependencyValues {
-  var getCurrentUserTier: @Sendable () throws -> Int {
-    get { self[GetCurrentUserTierKey.self] }
-    set { self[GetCurrentUserTierKey.self] = newValue }
-  }
-}
-
-private enum GetCurrentUserTierKey: DependencyKey {
-    static let liveValue: @Sendable () throws -> Int = {
-        let vpnKeychain: VpnKeychainProtocol = Container.sharedContainer.makeVpnKeychain()
-        return try vpnKeychain.fetchCached().maxTier
+extension Array where Element == Text {
+    public func joined(separator: Text) -> Text? {
+        guard let first else { return nil }
+        return dropFirst().reduce(first) { $0 + separator + $1 }
     }
 }
