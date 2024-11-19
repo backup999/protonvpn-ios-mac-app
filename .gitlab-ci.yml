@@ -154,6 +154,8 @@ prepare:
   rules:
     - if: $CI_MERGE_REQUEST_TITLE =~ /^Draft:/ # Don't run pipelines automatically for draft MRs
       when: manual
+    - if: $I18N_SCHEDULES_FILTER == "commit-translations" # Don't run pipelines when syncing from crowdin
+      when: never
     - when: always
   artifacts:
     expire_in: 5 days
