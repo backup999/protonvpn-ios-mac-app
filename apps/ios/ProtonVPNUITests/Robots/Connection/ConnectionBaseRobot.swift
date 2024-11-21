@@ -1,5 +1,5 @@
 //
-//  Created on 19/11/24.
+//  Created on 20/11/24.
 //
 //  Copyright (c) 2024 Proton AG
 //
@@ -16,30 +16,18 @@
 //  You should have received a copy of the GNU General Public License
 //  along with ProtonVPN.  If not, see <https://www.gnu.org/licenses/>.
 
+import fusion
 import XCTest
+import Strings
+import UITestsHelpers
 
-extension XCUIElement {
+class ConnectionBaseRobot: CoreElements {
 
-    /**
-     * Deletes text value from the text field.
-     */
-    @discardableResult
-    func tapAndClearText() -> XCUIElement {
-        if let stringValue = self.value as? String {
-            //tap at the right corner of the input
-            let lowerRightCorner = self.coordinate(
-                withNormalizedOffset: CGVectorMake(0.9, 0.9)
-            )
-            lowerRightCorner.tap()
-
-            let delete: String = String(
-                repeating: XCUIKeyboardKey.delete.rawValue,
-                count: stringValue.count
-            )
-            self.typeText(delete)
-        } else {
-            self.tap()
+    public func allowVpnPermission() {
+        let allowButton = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+            .buttons["Allow"]
+        if allowButton.waitForExistence(timeout: 1) {
+            allowButton.tap()
         }
-        return self
     }
 }
