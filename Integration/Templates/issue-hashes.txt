@@ -1,3 +1,4 @@
+{{ config.releaseChannel }}: {{ train }} {{ version }}
 {% for category, changes in release.changes -%}
 {%- for change in changes -%}
 {%- if change.projectIds.count > 0 -%}
