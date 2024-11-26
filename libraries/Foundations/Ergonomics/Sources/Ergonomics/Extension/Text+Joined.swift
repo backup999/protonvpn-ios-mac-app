@@ -1,7 +1,7 @@
 //
-//  Created on 14/12/2023.
+//  Created on 15/11/2024.
 //
-//  Copyright (c) 2023 Proton AG
+//  Copyright (c) 2024 Proton AG
 //
 //  ProtonVPN is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -16,12 +16,21 @@
 //  You should have received a copy of the GNU General Public License
 //  along with ProtonVPN.  If not, see <https://www.gnu.org/licenses/>.
 
-import Foundation
+import SwiftUI
 
-public enum Constants {
-    public static let readableContentWidth: CGFloat = 672
+public protocol Joinable {
+    func joined(to other: Self, with separator: Self) -> Self
+}
 
-    /// Number of free countries beyond the ones depicted by the flags in the
-    /// "Auto-selected from" disclaimer in the home connection card.
-    public static let additionalFreeCountryCount: Int = 2
+extension Text: Joinable {
+    public func joined(to other: Self, with separator: Self) -> Self {
+        return self + separator + other
+    }
+}
+
+extension Collection where Element: Joinable {
+    public func joined(separator: Self.Element) -> Self.Element? {
+        guard let first else { return nil }
+        return dropFirst().reduce(first) { $0.joined(to: $1, with: separator) }
+    }
 }
