@@ -41,6 +41,7 @@ import ProtonCoreCryptoVPNPatchedGoImplementation
 // Local dependencies
 import VPNAppCore
 import Domain
+import Ergonomics
 import LegacyCommon
 import Logging
 import PMLogger
@@ -67,6 +68,9 @@ class AppDelegate: NSObject {
     private var appInactivityTimer: BackgroundTimer?
     private lazy var pushNotificationService = PushNotificationService.shared
     private var notificationManager: NotificationManagerProtocol!
+    private lazy var telemetrySettings: TelemetrySettings = container.makeTelemetrySettings()
+
+    private var tokens: [NotificationToken] = []
 }
 #else
 class AppDelegate: NSObject {
@@ -111,7 +115,7 @@ extension AppDelegate: NSApplicationDelegate {
                 SentryHelper.setupSentry(
                     dsn: ObfuscatedConstants.sentryDsnmacOS,
                     isEnabled: { [weak self] in
-                        self?.container.makeTelemetrySettings().telemetryCrashReports ?? false
+                        self?.isTelemetryAllowed() ?? false
                     },
                     getUserId: { [weak self] in
                         self?.container.makeAuthKeychainHandle().userId
@@ -151,6 +155,8 @@ extension AppDelegate: NSApplicationDelegate {
                     self.navigationService.launched()
                 }
             }
+
+            self.registerForTelemetryChanges()
 
             self.container.applicationDidFinishLaunching()
         }
@@ -313,6 +319,10 @@ extension AppDelegate: NSApplicationDelegate {
 
         LoggingSystem.bootstrap { _ in return multiplexLogHandler }
     }
+
+    private func isTelemetryAllowed() -> Bool {
+        container.makeTelemetrySettings().telemetryCrashReports
+    }
 }
 
 // MARK: - Migration
@@ -363,15 +373,22 @@ extension AppDelegate {
 }
 
 extension AppDelegate {
+    // Typically set the environment only if telemetry is allowed
+    private func enableExternalLogging() {
+        @Dependency(\.dohConfiguration) var doh
+        if doh.defaultHost.contains(PMLog.ExternalLogEnvironment.black.rawValue) {
+            PMLog.setExternalLoggingEnvironment(.black)
+        } else {
+            PMLog.setExternalLoggingEnvironment(.production)
+        }
+    }
+
+    private func disableExternalLogging() {
+        PMLog.disableExternalLogging()
+    }
+
     private func setupCoreIntegration() {
         ColorProvider.brand = .vpn
-
-        @Dependency(\.dohConfiguration) var doh
-        if doh.defaultHost.contains("black") {
-            PMLog.setEnvironment(environment: "black")
-        } else {
-            PMLog.setEnvironment(environment: "production")
-        }
 
         ProtonCoreLog.PMLog.callback = { (message, level) in
             switch level {
@@ -383,7 +400,7 @@ extension AppDelegate {
         }
 
         let apiService = container.makeNetworking().apiService
-        apiService.acquireSessionIfNeeded { result in
+        apiService.acquireSessionIfNeeded { [unowned apiService, unowned self] result in
             switch result {
             case .success(.sessionAlreadyPresent(let authCredential)), .success(.sessionFetchedAndAvailable(let authCredential)):
                 FeatureFlagsRepository.shared.setApiService(apiService)
@@ -395,6 +412,13 @@ extension AppDelegate {
                     try await FeatureFlagsRepository.shared.fetchFlags()
                 }
 
+                let isTelemetryEnabled = self.telemetrySettings.telemetryCrashReports
+
+                if isTelemetryEnabled {
+                    enableExternalLogging()
+                } else {
+                    disableExternalLogging()
+                }
             case .failure(let error):
                 log.error("acquireSessionIfNeeded didn't succeed and therefore feature flags didn't get fetched", category: .api, event: .response, metadata: ["error": "\(error)"])
             default:
@@ -402,5 +426,21 @@ extension AppDelegate {
             }
         }
         ObservabilityEnv.current.setupWorld(requestPerformer: apiService)
+    }
+
+    private func registerForTelemetryChanges() {
+        let center = NotificationCenter.default
+        tokens.append(
+            center.addObserver(for: PropertiesManager.telemetryCrashReportsNotification, object: nil) { [weak self] notification in
+                switch (notification.object as? Bool) {
+                case true:
+                    self?.enableExternalLogging()
+                case false:
+                    self?.disableExternalLogging()
+                default:
+                    break // unknown object type, not doing anything
+                }
+            }
+        )
     }
 }
