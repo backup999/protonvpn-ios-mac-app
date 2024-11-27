@@ -217,4 +217,6 @@ trigger:branch:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
+    - if: $I18N_SCHEDULES_FILTER == "commit-translations"
+      when: never
     - when: on_success
